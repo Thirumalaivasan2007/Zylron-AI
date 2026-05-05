@@ -479,6 +479,14 @@ const Dashboard = () => {
         return () => clearInterval(timer);
     }, []);
 
+    // Global Neural Auto-Clear for Feedback Toasts
+    useEffect(() => {
+        if (feedbackToast) {
+            const timer = setTimeout(() => setFeedbackToast(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [feedbackToast]);
+
     const updateWidgetNote = (text) => {
         setWidgetNote(text);
         localStorage.setItem('zylron_widget_note', text);
@@ -1598,7 +1606,6 @@ const Dashboard = () => {
             if (relevantChats.length > 0) {
                 const memoryContext = relevantChats.map(chat => `[PAST CONTEXT: ${chat.message}]`).join('\n');
                 setFeedbackToast(`🧠 Recalled ${relevantChats.length} semantic links!`);
-                setTimeout(() => setFeedbackToast(null), 3000);
                 return "\n\n[NEURAL MEMORY ACTIVATED: Reference these past sessions if relevant:]\n" + memoryContext;
             }
         } catch (err) {
