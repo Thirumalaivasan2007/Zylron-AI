@@ -440,7 +440,7 @@ const Dashboard = () => {
     const [showModelMenu, setShowModelMenu] = useState(false);
 
     // Step 2: Team Workspaces
-    const [activeWorkspace, setActiveWorkspace] = useState('personal'); // 'personal' or 'team'
+    const [activeWorkspace, setActiveWorkspace] = useState(localStorage.getItem('zylron_workspace') || 'personal'); // 'personal' or 'team'
     // Feature F: Follow-up Suggestions
     const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
     // Feature G: Desktop Notifications
@@ -961,6 +961,7 @@ const Dashboard = () => {
     useEffect(() => {
         if (user) {
             const workspaceId = activeWorkspace === 'team' ? 'zylron_team_shared' : user.uid;
+            localStorage.setItem('zylron_workspace', activeWorkspace);
             fetchHistory(workspaceId);
         } else {
             setHistory([]);
@@ -970,6 +971,17 @@ const Dashboard = () => {
     const fetchHistory = async (workspaceId) => {
         const cloudChats = await fetchCloudChats(user.uid, workspaceId);
         setHistory(cloudChats);
+        
+        // Auto-Resume last session if it exists in this workspace
+        const lastSessionId = localStorage.getItem('zylron_last_session');
+        if (lastSessionId && !currentSessionId) {
+            const session = cloudChats.find(s => s.sessionId === lastSessionId);
+            if (session) {
+                setCurrentSessionId(lastSessionId);
+                setMessages(session.messages || []);
+                setTimeout(() => scrollToBottom(), 100);
+            }
+        }
     };
 
 
@@ -1040,6 +1052,9 @@ const Dashboard = () => {
 
         // Save to Firebase (Real Logic: Pass workspace context)
         await saveChatToCloud(user.uid, sessionId, chatTitle, updatedMessages, existingSession?.pinned || false, existingSession?.folder, workspaceId);
+        
+        // Ensure this session is remembered on refresh
+        localStorage.setItem('zylron_last_session', sessionId);
     };
 
 
@@ -1048,6 +1063,7 @@ const Dashboard = () => {
         const session = history.find(s => s.sessionId === sessionId);
         if (session) {
             setCurrentSessionId(sessionId);
+            localStorage.setItem('zylron_last_session', sessionId);
             setMessages(session.messages || []);
             if (window.innerWidth < 1024) setSidebarOpen(false);
             
@@ -1058,6 +1074,7 @@ const Dashboard = () => {
 
     const handleNewChat = () => {
         setCurrentSessionId(null);
+        localStorage.removeItem('zylron_last_session');
         setMessages([]); 
         removePdf();
         if (window.innerWidth < 1024) setSidebarOpen(false);
