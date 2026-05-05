@@ -87,7 +87,7 @@ import ZylronLogo from '../logo.png';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import EmojiPicker from 'emoji-picker-react';
-import { saveChatToCloud, fetchCloudChats, deleteCloudChat, saveFeedbackToCloud, createPublicShare, createPublicShareWithId } from '../services/firestore';
+import { saveChatToCloud, fetchCloudChats, deleteCloudChat, saveFeedbackToCloud, createPublicShare, createPublicShareWithId, saveUserPreferences, fetchUserPreferences } from '../services/firestore';
 import ZylronSense from '../components/ZylronSense';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
@@ -967,6 +967,39 @@ const Dashboard = () => {
             setHistory([]);
         }
     }, [user, activeWorkspace]);
+
+    // Cloud Preferences Sync (Phase 4 Real Logic)
+    useEffect(() => {
+        if (!user) return;
+        
+        const loadPrefs = async () => {
+            const prefs = await fetchUserPreferences(user.uid);
+            if (prefs) {
+                if (prefs.activeWorkspace) setActiveWorkspace(prefs.activeWorkspace);
+                if (prefs.activeLanguage) setActiveLanguage(prefs.activeLanguage);
+                if (prefs.persona) setPersona(prefs.persona);
+            }
+        };
+        
+        loadPrefs();
+    }, [user]);
+
+    // Save preferences on change (Debounced for performance)
+    useEffect(() => {
+        if (!user) return;
+        
+        const timer = setTimeout(() => {
+            const prefs = {
+                activeWorkspace,
+                activeLanguage,
+                persona,
+                updatedAt: new Date().toISOString()
+            };
+            saveUserPreferences(user.uid, prefs);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+    }, [user, activeWorkspace, activeLanguage, persona]);
 
     const fetchHistory = async (workspaceId) => {
         const cloudChats = await fetchCloudChats(user.uid, workspaceId);

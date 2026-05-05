@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDocs, query, where, orderBy, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, orderBy, deleteDoc, serverTimestamp, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const CHATS_COLLECTION = 'chats';
@@ -138,6 +138,34 @@ export const fetchPublicChat = async (publicId) => {
         return null;
     } catch (error) {
         console.error("Error fetching public chat:", error);
+        return null;
+    }
+};
+// User Profiles & Preferences Sync
+export const saveUserPreferences = async (userId, preferences) => {
+    if (!userId) return;
+    try {
+        const prefRef = doc(db, 'user_preferences', userId);
+        await setDoc(prefRef, {
+            ...preferences,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    } catch (error) {
+        console.error("Error saving user preferences:", error);
+    }
+};
+
+export const fetchUserPreferences = async (userId) => {
+    if (!userId) return null;
+    try {
+        const prefRef = doc(db, 'user_preferences', userId);
+        const docSnap = await getDoc(prefRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user preferences:", error);
         return null;
     }
 };
