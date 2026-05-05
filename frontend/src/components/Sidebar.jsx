@@ -1,7 +1,7 @@
 import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, deleteSession, togglePinSession, updateSessionFolder, credits = 0, xp = 0, onShare, onExportPDF, onExportMD, onTour, onAdmin, isPro = false, onUpgrade, activeWorkspace = 'personal', onWorkspaceChange }) => {
+const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, deleteSession, togglePinSession, updateSessionFolder, credits = 0, xp = 0, onShare, onExportPDF, onExportMD, onTour, onAdmin, isPro = false, onUpgrade, activeWorkspace = 'personal', onWorkspaceChange }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFolder, setActiveFolder] = useState(() => localStorage.getItem('zylron_active_folder') || 'all');
 
@@ -185,9 +185,9 @@ const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, delete
                         </div>
                     ) : (
                         filteredHistory.map((chat) => (
-                            <div
+                            <button
                                 key={chat.sessionId}
-                                onClick={() => loadSession(chat.sessionId)}
+                                onClick={() => onSessionClick(chat.sessionId)}
                                 className={`w-full text-left px-4 py-3 rounded-2xl transition-all duration-300 cursor-pointer group flex items-center justify-between gap-3 ${currentSessionId === chat.sessionId ? 'bg-emerald-100/50 dark:bg-cyan-900/40 text-emerald-900 dark:text-cyan-300 shadow-[inset_0_0_20px_rgba(0,255,255,0.05)] border border-emerald-200/50 dark:border-cyan-800/50' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-cyan-950/30 hover:text-gray-900 dark:hover:text-gray-200 border border-transparent'}`}
                             >
                                 <div className="flex flex-col gap-1 min-w-0 flex-1">
@@ -237,7 +237,7 @@ const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, delete
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </button>
                         ))
                     )}
                 </div>

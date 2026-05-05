@@ -1789,7 +1789,7 @@ const Dashboard = () => {
             <div className={`fixed z-40 inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition duration-300 ease-in-out shadow-2xl`}>
                 <Sidebar 
                     history={history} 
-                    loadSession={loadSession} 
+                    onSessionClick={loadSession} 
                     handleNewChat={handleNewChat} 
                     currentSessionId={currentSessionId} 
                     deleteSession={deleteSession} 
