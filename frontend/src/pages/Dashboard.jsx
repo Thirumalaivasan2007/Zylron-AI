@@ -1279,6 +1279,8 @@ const Dashboard = () => {
         }
 
         const userMsg = input;
+        const sessionId = currentSessionId || Date.now().toString();
+        
         // ✅ Neural Lock: Ensure first message locks the session ID
         if (!currentSessionId) {
             setCurrentSessionId(sessionId);
