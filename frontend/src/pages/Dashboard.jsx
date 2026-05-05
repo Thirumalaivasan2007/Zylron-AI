@@ -1075,9 +1075,7 @@ const Dashboard = () => {
     const saveToCloud = async (sessionId, updatedMessages, forcedTitle = null) => {
         if (!user) return;
         
-        // Optimistic UI Update
         const workspaceId = activeWorkspace === 'team' ? 'zylron_team_shared' : user.uid;
-        
         let chatTitle = forcedTitle;
         const existingSession = history.find(s => s.sessionId === sessionId);
 
