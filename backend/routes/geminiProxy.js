@@ -101,13 +101,14 @@ router.get('/list', async (req, res) => {
 // 📜 NEURAL HISTORY BRIDGE: Pulls directly from MongoDB for the Sidebar
 router.post('/history', async (req, res) => {
     try {
-        const { userId, workspaceId } = req.body;
+        const userId = req.body.userId || req.body.user;
+        const workspaceId = req.body.workspaceId || req.body.workspace || userId;
         if (!userId) return res.status(400).json({ error: "User ID required" });
 
         // Pull from MongoDB (The Product Source of Truth)
         const sessions = await ChatHistory.aggregate([
-            { $match: { user: userId, workspaceId: workspaceId || userId } },
-            { $sort: { createdAt: 1 } },
+            { $match: { user: userId, workspaceId: workspaceId } },
+            { $sort: { createdAt: -1 } },
             {
                 $group: {
                     _id: "$sessionId",

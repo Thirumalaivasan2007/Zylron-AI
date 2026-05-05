@@ -1046,11 +1046,9 @@ const Dashboard = () => {
                 // Auto-Resume last session if it exists in this workspace
                 const lastSessionId = localStorage.getItem('zylron_last_session');
                 if (lastSessionId && !currentSessionId) {
-                    const session = cloudChats.find(s => s.sessionId === lastSessionId);
-                    if (session) {
-                        setCurrentSessionId(lastSessionId);
-                        setMessages(session.messages || []);
-                        setTimeout(() => scrollToBottom(), 100);
+                    const sessionExists = cloudChats.some(s => s.sessionId === lastSessionId);
+                    if (sessionExists) {
+                        loadSession(lastSessionId); // ✅ Call full load instead of just setting state
                     }
                 }
                 return;
@@ -1281,8 +1279,11 @@ const Dashboard = () => {
         }
 
         const userMsg = input;
-        const sessionId = currentSessionId || Date.now().toString();
-        if (!currentSessionId) setCurrentSessionId(sessionId);
+        // ✅ Neural Lock: Ensure first message locks the session ID
+        if (!currentSessionId) {
+            setCurrentSessionId(sessionId);
+            localStorage.setItem('zylron_last_session', sessionId);
+        }
 
         // Prep image for Gemini and clear it from UI state immediately
         const imagePayload = activeImage ? {
