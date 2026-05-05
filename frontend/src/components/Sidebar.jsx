@@ -15,11 +15,16 @@ const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, delete
         { id: 'personal', label: 'Personal', icon: <Plus size={14} /> }
     ];
 
-    const filteredHistory = history.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)).filter(chat => {
-        const matchesSearch = chat.message.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFolder = activeFolder === 'all' || (chat.folder || 'personal') === activeFolder;
-        return matchesSearch && matchesFolder;
-    });
+    const filteredHistory = Array.isArray(history) 
+        ? history
+            .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+            .filter(chat => {
+                const title = chat.message || chat.title || "New Chat";
+                const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesFolder = activeFolder === 'all' || (chat.folder || 'personal') === activeFolder;
+                return matchesSearch && matchesFolder;
+            })
+        : [];
 
     return (
         <div className={`w-72 h-full bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-xl border-r border-gray-200/50 dark:border-cyan-900/30 flex flex-col transition-all duration-500 ${activeWorkspace === 'team' ? 'ring-1 ring-indigo-500/20' : ''}`}>
@@ -188,7 +193,7 @@ const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, delete
                                     <div className="flex items-center gap-2">
                                         {chat.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
                                         <div className="truncate text-sm font-medium">
-                                            {chat.message}
+                                            {chat.message || chat.title || "New Chat"}
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between mt-1 pr-1">
