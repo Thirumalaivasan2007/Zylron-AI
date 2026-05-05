@@ -193,11 +193,28 @@ const Sidebar = ({ history, loadSession, handleNewChat, currentSessionId, delete
                                 <div className="flex flex-col gap-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                         {chat.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
-                                        <div className="truncate text-sm font-medium">
+                                        <div className="truncate text-sm font-bold tracking-tight">
                                             {chat.message || chat.title || "New Chat"}
                                         </div>
+                                        {currentSessionId === chat.sessionId && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0" />
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between mt-1 pr-1">
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[9px] font-bold text-indigo-500/80 uppercase">
+                                            {chat.folder || 'personal'}
+                                        </span>
+                                        <span className="w-0.5 h-0.5 rounded-full bg-gray-400 opacity-30"></span>
+                                        <span className="text-[9px] font-medium text-gray-400">
+                                            {chat.createdAt ? new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                        </span>
+                                        {/* Storage Status Badge */}
+                                        <span className="ml-auto text-[8px] font-black text-emerald-500/40 uppercase tracking-widest flex items-center gap-1">
+                                            <div className="w-1 h-1 rounded-full bg-emerald-500/40"></div>
+                                            Stored
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-2 pr-1">
                                         {/* Folder Selection (Compact) */}
                                         <select 
                                             value={chat.folder || 'personal'} 
