@@ -1033,11 +1033,21 @@ const Dashboard = () => {
             const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
             const proxyUrl = `${API_BASE}/api/gemini/history`; 
             
-            const response = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.uid, workspaceId })
-            });
+            let response;
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (retryCount < maxRetries) {
+                response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.uid, workspaceId })
+                });
+                if (response.ok) break;
+                retryCount++;
+                console.log(`⏳ Neural Link: Retrying fetch (${retryCount}/${maxRetries})...`);
+                await new Promise(r => setTimeout(r, 2000)); // Wait 2s
+            }
             
             if (response.ok) {
                 const cloudChats = await response.json();

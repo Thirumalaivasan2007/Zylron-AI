@@ -107,7 +107,7 @@ router.post('/history', async (req, res) => {
 
         // Pull from MongoDB (The Product Source of Truth)
         const sessions = await ChatHistory.aggregate([
-            { $match: { user: userId, workspaceId: workspaceId } },
+            { $match: { user: userId, workspaceId: { $in: [workspaceId, userId, null] } } },
             { $sort: { createdAt: -1 } },
             {
                 $group: {
