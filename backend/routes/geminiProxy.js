@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { toolDefinitions, toolHandlers } = require('../utils/agentTools');
 const ChatHistory = require('../models/ChatHistory');
+const { embedAndStore, queryVector } = require('../utils/vectorStore');
 
 const API_KEY = (process.env.GEMINI_API_KEY || "").trim();
 const OMNI_SNAPSHOT_PATH = path.join(__dirname, '..', '..', 'desktop', 'omni_snapshot.jpg');
@@ -179,8 +180,26 @@ router.post('/proxy', async (req, res) => {
                     title, message: prompt,
                     response: responseText.substring(0, 2000)
                 });
-            } catch (e) { /* history save non-critical */ }
+
+                // ✅ NEW: Vector Sync (Semantic Memory)
+                // Index the pair [User Query + AI Response] for future recall
+                const vectorPayload = `USER: ${prompt}\nAI: ${responseText}`;
+                await embedAndStore(vectorPayload, { userId, sessionId, title });
+
+            } catch (e) { console.warn("History/Vector Sync Issue:", e.message); }
         };
+        
+        // ✅ NEW: Semantic Recall (Phase 4 Product Feature)
+        let semanticContext = "";
+        try {
+            console.log("🧠 Neural Recall: Searching Vector DB...");
+            const recall = await queryVector(prompt);
+            if (recall && !recall.includes("❌") && recall.trim().length > 10) {
+                semanticContext = `\n\n[NEURAL RECALL: You remember these relevant past interactions with this user:]\n${recall}\n`;
+                console.log("✅ Semantic Links Found!");
+            }
+        } catch (e) { console.warn("Recall failed:", e.message); }
+
         // --- STEP 0: INTENT CLASSIFIER & HARD-TRIGGER ---
         const repoRegex = /https:\/\/github\.com\/[^\s]+/;
         const repoMatch = prompt.match(repoRegex);
@@ -241,6 +260,7 @@ router.post('/proxy', async (req, res) => {
             // Frontend systemInstruction = context only (pdf/memory/search/chronos) — NOT the persona
             const personaSysText = `${ZYLRON_BACKEND_IDENTITY}
 ${systemInstruction ? '\n\nADDITIONAL CONTEXT:\n' + systemInstruction : ''}
+${semanticContext}
 ${screenPart ? '\nYou can see the user\'s screen — use that context for precise help.' : ''}
 Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
 
