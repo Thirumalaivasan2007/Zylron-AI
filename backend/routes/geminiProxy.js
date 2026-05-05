@@ -124,7 +124,7 @@ router.post('/history', async (req, res) => {
 
         const formatted = sessions.map(s => ({
             sessionId: s._id,
-            message: s.titleData || (s.firstMessage ? s.firstMessage.substring(0, 40) : "New Chat"),
+            message: s.message || (s.firstMessage ? s.firstMessage.substring(0, 40) : "New Chat"),
             createdAt: s.createdAt,
             pinned: s.pinned || false,
             folder: s.folder || 'personal'
