@@ -1072,53 +1072,33 @@ const Dashboard = () => {
         setHistory(cloudChats);
     };
 
-
-
-    const saveToCloud = async (sessionId, updatedMessages) => {
+    const saveToCloud = async (sessionId, updatedMessages, forcedTitle = null) => {
         if (!user) return;
-        let chatTitle = 'New Chat';
-        const existingSession = history.find(s => s.sessionId === sessionId);
         
-        if (existingSession) {
-            chatTitle = existingSession.message;
-        } else {
-            const firstUserMsg = updatedMessages.find(m => m.type === 'user' && !m.isSystem);
-            const content = firstUserMsg?.content?.trim() || '';
-            const lower = content.toLowerCase();
-
-            // ✅ Smart local title — zero API calls
-            if (!content || content.length < 3) {
-                chatTitle = 'New Chat';
-            } else if (/^(hi|hello|hey|hii|yo|sup|howdy)[^a-z]?$/i.test(content)) {
-                chatTitle = 'Greeting';
-            } else if (/^who (is|are|created|made|built|developed)/i.test(content)) {
-                chatTitle = 'About ' + content.replace(/^who (is|are|created|made|built|developed)\s*/i, '').split(' ').slice(0,2).join(' ');
-            } else if (/^what (is|are|does|do|was|were)/i.test(content)) {
-                chatTitle = content.replace(/^what (is|are|does|do|was|were)\s*/i, '').split(' ').slice(0,3).join(' ') || 'Info Query';
-            } else if (/^how (to|do|does|can|did)/i.test(content)) {
-                chatTitle = 'How to ' + content.replace(/^how (to|do|does|can|did)\s*/i, '').split(' ').slice(0,3).join(' ');
-            } else if (/^(explain|tell me|describe|what is)/i.test(content)) {
-                chatTitle = content.replace(/^(explain|tell me about|describe|what is)\s*/i, '').split(' ').slice(0,4).join(' ') || 'Explanation';
-            } else if (/\b(build|create|make|generate|code|develop|write a)\b/i.test(lower)) {
-                chatTitle = content.split(/\s+/).slice(0,4).join(' ');
-            } else if (/\b(ipl|cricket|match|score|team|vs|rcb|csk|mi|kkr|srh|dc|pbks)\b/i.test(lower)) {
-                chatTitle = 'Cricket Talk';
-            } else if (/\b(stock|price|market|crypto|bitcoin|nifty|sensex)\b/i.test(lower)) {
-                chatTitle = 'Market Query';
-            } else if (/\b(weather|rain|temperature|forecast|climate)\b/i.test(lower)) {
-                chatTitle = 'Weather Check';
-            } else {
-                // Default: first 5 words, properly capitalized
-                const words = content.split(/\s+/).slice(0, 5).join(' ');
-                chatTitle = words.length > 40 ? words.substring(0, 40) : words;
-            }
-            // Capitalize first letter
-            chatTitle = chatTitle.charAt(0).toUpperCase() + chatTitle.slice(1);
-        }
-
-
         // Optimistic UI Update
         const workspaceId = activeWorkspace === 'team' ? 'zylron_team_shared' : user.uid;
+        
+        let chatTitle = forcedTitle;
+        const existingSession = history.find(s => s.sessionId === sessionId);
+
+        if (!chatTitle) {
+            if (existingSession && existingSession.message && existingSession.message !== 'New Chat') {
+                chatTitle = existingSession.message;
+            } else {
+                const firstUserMsg = updatedMessages.find(m => m.type === 'user' && !m.isSystem);
+                const content = firstUserMsg?.content?.trim() || 'New Chat';
+                
+                // ✅ Smart local title — zero API calls
+                if (content.length < 3) {
+                    chatTitle = 'New Chat';
+                } else {
+                    const words = content.split(/\s+/).slice(0, 5).join(' ');
+                    chatTitle = words.length > 40 ? words.substring(0, 40) : words;
+                    chatTitle = chatTitle.charAt(0).toUpperCase() + chatTitle.slice(1);
+                }
+            }
+        }
+
         const newSessionData = {
             sessionId,
             message: chatTitle,
@@ -1370,13 +1350,16 @@ const Dashboard = () => {
 
             const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(imagePrompt)}?width=1024&height=1024&seed=${Date.now()}&model=flux`;
             
-            setMessages(prev => [...prev, { 
+            const aiResp = `🎨 **Zylron Creator** has synthesized your request: "${imagePrompt}"`;
+            const finalMessages = [...updatedMessages, { 
                 type: 'ai', 
-                content: `🎨 **Zylron Creator** has synthesized your request: "${imagePrompt}"`, 
+                content: aiResp, 
                 imageUrl: imageUrl,
                 animate: true 
-            }]);
+            }];
+            setMessages(finalMessages);
             setIsGeneratingImage(false);
+            await saveToCloud(sessionId, finalMessages, "Image Generation");
             return;
         }
 
@@ -1425,7 +1408,7 @@ const Dashboard = () => {
                 neuralResponse = data.text;
             } catch (proxyError) {
                 clearTimeout(timeoutId);
-                console.warn("Neural Proxy failed, switching to direct link:", proxyError);
+                console.warn("Neural Proxy failed, trying direct link...", proxyError);
                 // DIRECT FALLBACK (Step 2 Real Logic)
                 const directResponse = await chatWithGemini(
                     userMsg, 
@@ -1644,7 +1627,7 @@ const Dashboard = () => {
             }
 
             // Run cloud sync asynchronously so it doesn't block the UI loading state
-            saveToCloud(sessionId, finalMessages).catch(console.error);
+            saveToCloud(sessionId, finalMessages, data?.title).catch(console.error);
         } catch (error) {
             console.error("Neural Engine Error:", error);
             setMessages(prev => [...prev, { 

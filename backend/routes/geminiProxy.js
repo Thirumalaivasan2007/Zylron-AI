@@ -271,14 +271,18 @@ router.post('/proxy', async (req, res) => {
                 // Calculate workspace context — handle both possible prop names
                 const workspace = req.body.workspaceId || req.body.workspace || userId;
 
-                // Smart title: if current title is "New Chat" or too short, try to improve it
+                // 🧠 Neural Title Evolution: AI generates a title based on context
                 let title = 'New Chat';
                 const existingChat = await ChatHistory.findOne({ sessionId }).select('title');
                 
-                if (!existingChat || existingChat.title === 'New Chat') {
-                    title = prompt.trim().length < 10
-                        ? (existingChat?.title || 'New Chat')
-                        : prompt.trim().split(/\s+/).slice(0, 5).join(' ');
+                if (!existingChat || existingChat.title === 'New Chat' || existingChat.title === 'Neural Session') {
+                    // Quick heuristic for now: first few words capitalized
+                    const words = prompt.trim().split(/\s+/);
+                    title = words.length > 1 
+                        ? words.slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+                        : (words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase() + " Chat");
+                    
+                    if (title.length > 30) title = title.substring(0, 27) + "...";
                 } else {
                     title = existingChat.title;
                 }
@@ -397,6 +401,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
             await saveToHistory(chatText); // ✅ save chat to history
             return res.json({ 
                 text: chatText, 
+                title: title, // 🧠 Send generated title to UI
                 agentUsed: false,
                 previewUrl: null 
             });
