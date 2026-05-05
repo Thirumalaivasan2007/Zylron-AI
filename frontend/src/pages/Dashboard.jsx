@@ -1394,6 +1394,7 @@ const Dashboard = () => {
                         prompt: userMsg || "Please describe this image.",
                         history: geminiHistory,
                         persona: persona,
+                        image: activePdf?.type?.startsWith('image/') ? activePdf.data : null, // 👁️ Vision Support
                         systemInstruction: (PERSONAS[persona] || PERSONAS.standard) + 
                             (pdfContext ? '\n\nCONTEXT FROM DOCUMENT:\n' + pdfContext : '') +
                             memoryContext + searchContext + chronosContext + langContext + urlContext,

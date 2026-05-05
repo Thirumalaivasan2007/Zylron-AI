@@ -14,7 +14,7 @@ async function embedAndStore(text, metadata) {
         const embedding = result.embedding.values;
 
         await index.upsert([{
-            id: Date.now().toString(),
+            id: `zylron_${sessionId}_${Date.now()}`,
             values: embedding,
             metadata: { ...metadata, text }
         }]);

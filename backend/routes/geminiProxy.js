@@ -244,9 +244,21 @@ async function neuralCall(payload) {
 router.post('/proxy', async (req, res) => {
     console.log("🤝 ZYLON CREW: Swarm Mode (Stable) Initiated...");
     try {
-        const { prompt, history = [], sessionId, userId, systemInstruction, persona } = req.body;
+        const { prompt, history = [], sessionId, userId, systemInstruction, persona, image } = req.body;
         let agentUsed = false;
         let previewUrl = null;
+
+        // 🖼️ User Uploaded Image Handling (Multimodal)
+        let userImagePart = null;
+        if (image) {
+            userImagePart = {
+                inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: image.split(',')[1] || image // strip base64 header if present
+                }
+            };
+            console.log('📸 Multimodal Vision: Attaching user-uploaded image to query');
+        }
 
         // ─── Helper: Save to Cloud History ───────────────────
         const saveToHistory = async (responseText) => {
@@ -357,9 +369,18 @@ ${screenPart ? '\nYou can see the user\'s screen — use that context for precis
 Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
 
             // ✅ Memory Restoration: Combine history + current prompt, then prepend instruction to the very first message
-            const fullContents = [...history, { role: "user", parts: [{ text: (screenPart ? prompt + pushStatus : prompt) }] }];
+            const fullContents = [...history];
+            const currentParts = [];
+            if (userImagePart) currentParts.push(userImagePart);
+            if (screenPart) currentParts.push(screenPart);
+            currentParts.push({ text: (screenPart ? prompt + pushStatus : prompt) });
+
+            fullContents.push({ role: "user", parts: currentParts });
+
             if (fullContents.length > 0) {
-                fullContents[0].parts[0].text = personaSysText + "\n\n" + fullContents[0].parts[0].text;
+                // Prepend identity to the first message if it's a new session, or just to the current one
+                // Better: Prepend to the first message of the conversation
+                fullContents[0].parts[fullContents[0].parts.length - 1].text = personaSysText + "\n\n" + fullContents[0].parts[fullContents[0].parts.length - 1].text;
             }
 
             const chatData = await neuralCall({
