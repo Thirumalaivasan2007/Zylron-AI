@@ -135,6 +135,55 @@ router.post('/history', async (req, res) => {
     }
 });
 
+// 🔍 NEURAL SESSION RECALL: Pulls full message history for a specific session
+router.get('/session/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const chats = await ChatHistory.find({ sessionId }).sort({ createdAt: 1 });
+        
+        if (!chats || chats.length === 0) {
+            return res.status(404).json({ error: "Session not found" });
+        }
+
+        // Map MongoDB docs to the Frontend "Message" format
+        const messages = [];
+        chats.forEach(chat => {
+            messages.push({ type: 'user', content: chat.message, timestamp: chat.createdAt });
+            messages.push({ type: 'ai', content: chat.response, timestamp: chat.createdAt });
+        });
+
+        res.json({ sessionId, messages });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 🔄 NEURAL SYNC: Updates session metadata (pinned, folder) in MongoDB
+router.post('/update-session', async (req, res) => {
+    try {
+        const { sessionId, pinned, folder } = req.body;
+        const updateData = {};
+        if (pinned !== undefined) updateData.pinned = pinned;
+        if (folder !== undefined) updateData.folder = folder;
+
+        const result = await ChatHistory.updateMany({ sessionId }, { $set: updateData });
+        res.json({ success: true, modifiedCount: result.modifiedCount });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 🗑️ NEURAL PURGE: Deletes session from MongoDB
+router.delete('/delete/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const result = await ChatHistory.deleteMany({ sessionId });
+        res.json({ success: true, deletedCount: result.deletedCount });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 async function neuralCall(payload) {
     const models = [
         "gemini-2.5-flash", 
@@ -206,14 +255,14 @@ router.post('/proxy', async (req, res) => {
                 const existing = await ChatHistory.countDocuments({ user: userId, sessionId });
                 const isNew = existing === 0;
                 
-                // Calculate workspace context
-                const workspace = req.body.workspaceId || userId;
+                // Calculate workspace context — handle both possible prop names
+                const workspace = req.body.workspaceId || req.body.workspace || userId;
 
                 // Smart title: short messages → "Quick Chat", else first 5 words
                 let title = 'New Chat';
                 if (isNew) {
                     title = prompt.trim().length < 10
-                        ? 'Quick Chat'
+                        ? 'New Chat'
                         : prompt.trim().split(/\s+/).slice(0, 5).join(' ');
                 }
                 await ChatHistory.create({

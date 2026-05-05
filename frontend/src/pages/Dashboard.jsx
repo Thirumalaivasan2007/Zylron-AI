@@ -570,6 +570,30 @@ const Dashboard = () => {
         }
     };
 
+    const exportToMarkdown = () => {
+        if (messages.length === 0) return;
+        
+        const session = history.find(s => s.sessionId === currentSessionId);
+        const title = session ? (String(session.message || session.title)).replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'zylron_chat';
+        
+        let mdContent = `# Zylron AI Chat Export\n\n**Date:** ${new Date().toLocaleString()}\n**Persona:** ${persona}\n\n---\n\n`;
+        
+        messages.forEach(msg => {
+            if (msg.isSystem) return;
+            const role = msg.type === 'user' ? '**You:**' : '**Zylron AI:**';
+            mdContent += `${role}\n\n${msg.content}\n\n---\n\n`;
+        });
+
+        const blob = new Blob([mdContent], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setFeedbackToast("Markdown report generated! 📝");
+    };
+
     const exportToPDF = async () => {
         if (messages.length === 0) return;
         
@@ -1004,7 +1028,11 @@ const Dashboard = () => {
     const fetchHistory = async (workspaceId) => {
         try {
             // ✅ Primary: Fetch from MongoDB Backend (The Product Source)
-            const proxyUrl = 'https://zylron-agent-ai.onrender.com/api/gemini/history';
+            // Using a relative path so it works in both local and production
+            // ✅ Production-Ready: Dynamic URL selection
+            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const proxyUrl = `${API_BASE}/api/gemini/history`; 
+            
             const response = await fetch(proxyUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1052,9 +1080,9 @@ const Dashboard = () => {
 
             // ✅ Smart local title — zero API calls
             if (!content || content.length < 3) {
-                chatTitle = 'Quick Chat';
+                chatTitle = 'New Chat';
             } else if (/^(hi|hello|hey|hii|yo|sup|howdy)[^a-z]?$/i.test(content)) {
-                chatTitle = 'Quick Chat';
+                chatTitle = 'Greeting';
             } else if (/^who (is|are|created|made|built|developed)/i.test(content)) {
                 chatTitle = 'About ' + content.replace(/^who (is|are|created|made|built|developed)\s*/i, '').split(' ').slice(0,2).join(' ');
             } else if (/^what (is|are|does|do|was|were)/i.test(content)) {
@@ -1116,10 +1144,30 @@ const Dashboard = () => {
         if (session) {
             setCurrentSessionId(sessionId);
             localStorage.setItem('zylron_last_session', sessionId);
-            setMessages(session.messages || []);
-            if (window.innerWidth < 1024) setSidebarOpen(false);
             
-            // Give time for state to update then scroll
+            // ✅ IF messages are missing (MongoDB history only returns titles), FETCH FULL CHAT
+            if (!session.messages || session.messages.length === 0) {
+                try {
+                    setIsLoading(true);
+                    const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+                    const response = await fetch(`${API_BASE}/api/gemini/session/${sessionId}`);
+                    if (response.ok) {
+                        const fullSession = await response.json();
+                        setMessages(fullSession.messages || []);
+                    } else {
+                        setMessages([]); // Fallback
+                    }
+                } catch (err) {
+                    console.error("Failed to load full session from MongoDB:", err);
+                    setMessages([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setMessages(session.messages);
+            }
+            
+            if (window.innerWidth < 1024) setSidebarOpen(false);
             setTimeout(() => scrollToBottom(), 100);
         }
     };
@@ -1143,32 +1191,17 @@ const Dashboard = () => {
         setHistory(prev => prev.filter(s => s.sessionId !== sessionId));
         if (currentSessionId === sessionId) handleNewChat();
         
-        // Delete from Firebase
+        // 1. Delete from Firebase
         await deleteCloudChat(sessionId);
+        
+        // 2. Delete from MongoDB (Production Logic)
+        try {
+            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            await fetch(`${API_BASE}/api/gemini/delete/${sessionId}`, { method: 'DELETE' });
+        } catch (e) { console.warn("Mongo Delete failed:", e); }
     };
 
-    const exportToMarkdown = () => {
-        if (messages.length === 0) return;
-        
-        const session = history.find(s => s.sessionId === currentSessionId);
-        const title = session ? session.message.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'zylron_chat';
-        
-        let mdContent = `# Zylron AI Chat Export\n\n**Date:** ${new Date().toLocaleString()}\n**Persona:** ${persona}\n\n---\n\n`;
-        
-        messages.forEach(msg => {
-            if (msg.isSystem) return;
-            const role = msg.type === 'user' ? '**You:**' : '**Zylron AI:**';
-            mdContent += `${role}\n\n${msg.content}\n\n---\n\n`;
-        });
 
-        const blob = new Blob([mdContent], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${title}.md`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
 
 
 
@@ -1614,14 +1647,25 @@ const Dashboard = () => {
         const session = history.find(s => s.sessionId === sessionId);
         if (!session) return;
 
-        const updatedHistory = history.map(chat => 
-            chat.sessionId === sessionId ? { ...chat, pinned: !chat.pinned } : chat
-        );
-        setHistory(updatedHistory);
-        setFeedbackToast(session.pinned ? "📌 Chat unpinned!" : "📌 Chat pinned!");
+        const newPinned = !session.pinned;
+        setHistory(prev => prev.map(chat => 
+            chat.sessionId === sessionId ? { ...chat, pinned: newPinned } : chat
+        ));
+        setFeedbackToast(newPinned ? "📌 Chat Pinned to Top" : "📍 Chat Unpinned");
+
+        // 1. Persist to Firebase
+        await saveChatToCloud(user.uid, sessionId, session.message, session.messages, newPinned);
         
-        // Persist to cloud immediately
-        await saveChatToCloud(user.uid, sessionId, session.message, session.messages, !session.pinned);
+        // 2. Persist to MongoDB (Production Logic)
+        try {
+            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            await fetch(`${API_BASE}/api/gemini/update-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, pinned: newPinned })
+            });
+        } catch (e) { console.warn("Mongo Pin Sync failed:", e); }
+
         setTimeout(() => setFeedbackToast(null), 2000);
     };
 
@@ -1634,12 +1678,20 @@ const Dashboard = () => {
         ));
         setFeedbackToast(`📁 Moved to ${folder}!`);
         
-        // Persist the folder change to Firebase Cloud
+        // 1. Persist to Firebase
         try {
             await saveChatToCloud(user.uid, sessionId, session.message, session.messages, session.pinned || false, folder);
-        } catch (err) {
-            console.error("Cloud folder update failed:", err);
-        }
+        } catch (err) { console.error("Cloud folder update failed:", err); }
+
+        // 2. Persist to MongoDB (Production Logic)
+        try {
+            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            await fetch(`${API_BASE}/api/gemini/update-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, folder })
+            });
+        } catch (e) { console.warn("Mongo Folder Sync failed:", e); }
         
         setTimeout(() => setFeedbackToast(null), 2000);
     };
@@ -2888,7 +2940,11 @@ const Dashboard = () => {
                                             <MessageSquare size={16} />
                                             <span className="text-[10px] font-bold uppercase tracking-wider">Total Interactions</span>
                                         </div>
-                                        <div className="text-3xl font-bold dark:text-white mb-1">{messages.length} <span className="text-sm font-normal text-gray-400">Nodes</span></div>
+                                        {/* ✅ NEURAL CALCULATION: Summing up all messages across all sessions */}
+                                        <div className="text-3xl font-bold dark:text-white mb-1">
+                                            {history.reduce((acc, session) => acc + (session.messages?.length || 0), 0) + messages.length} 
+                                            <span className="text-sm font-normal text-gray-400 ml-2">Nodes</span>
+                                        </div>
                                         <p className="text-xs text-gray-500 mt-2">Active across {history.length} unique cloud sessions.</p>
                                     </div>
                                 </div>
