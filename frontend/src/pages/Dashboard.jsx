@@ -1121,6 +1121,24 @@ const Dashboard = () => {
         // Save to Firebase (Real Logic: Pass workspace context)
         await saveChatToCloud(user.uid, sessionId, chatTitle, updatedMessages, existingSession?.pinned || false, existingSession?.folder, workspaceId);
         
+        // ✅ Sync to MongoDB (Production Logic)
+        try {
+            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            await fetch(`${API_BASE}/api/gemini/update-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    sessionId, 
+                    title: chatTitle,
+                    folder: existingSession?.folder || 'personal',
+                    userId: user.uid,
+                    workspaceId
+                })
+            });
+        } catch (e) {
+            console.warn("MongoDB Sync failed in saveToCloud:", e);
+        }
+
         // Ensure this session is remembered on refresh
         localStorage.setItem('zylron_last_session', sessionId);
     };
