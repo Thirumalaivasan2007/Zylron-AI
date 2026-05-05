@@ -3,13 +3,18 @@ const mongoose = require('mongoose');
 const chatHistorySchema = mongoose.Schema(
     {
         user: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String, // Firebase UID
+            required: true
+        },
+        workspaceId: {
+            type: String,
             required: true,
-            ref: 'User'
+            index: true
         },
         sessionId: {
             type: String,
-            required: true
+            required: true,
+            index: true
         },
         title: {
             type: String,
@@ -22,6 +27,14 @@ const chatHistorySchema = mongoose.Schema(
         response: {
             type: String,
             required: [true, 'Response text is required']
+        },
+        pinned: {
+            type: Boolean,
+            default: false
+        },
+        folder: {
+            type: String,
+            default: 'personal'
         }
     },
     {

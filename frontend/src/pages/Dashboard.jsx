@@ -1002,19 +1002,38 @@ const Dashboard = () => {
     }, [user, activeWorkspace, activeLanguage, persona]);
 
     const fetchHistory = async (workspaceId) => {
+        try {
+            // ✅ Primary: Fetch from MongoDB Backend (The Product Source)
+            const proxyUrl = 'https://zylron-agent-ai.onrender.com/api/gemini/history';
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.uid, workspaceId })
+            });
+            
+            if (response.ok) {
+                const cloudChats = await response.json();
+                setHistory(cloudChats);
+                
+                // Auto-Resume last session if it exists in this workspace
+                const lastSessionId = localStorage.getItem('zylron_last_session');
+                if (lastSessionId && !currentSessionId) {
+                    const session = cloudChats.find(s => s.sessionId === lastSessionId);
+                    if (session) {
+                        setCurrentSessionId(lastSessionId);
+                        setMessages(session.messages || []);
+                        setTimeout(() => scrollToBottom(), 100);
+                    }
+                }
+                return;
+            }
+        } catch (err) {
+            console.warn("MongoDB History Fetch failed, trying Firebase fallback...", err);
+        }
+
+        // 🛡️ Fallback: Firebase (Original Logic)
         const cloudChats = await fetchCloudChats(user.uid, workspaceId);
         setHistory(cloudChats);
-        
-        // Auto-Resume last session if it exists in this workspace
-        const lastSessionId = localStorage.getItem('zylron_last_session');
-        if (lastSessionId && !currentSessionId) {
-            const session = cloudChats.find(s => s.sessionId === lastSessionId);
-            if (session) {
-                setCurrentSessionId(lastSessionId);
-                setMessages(session.messages || []);
-                setTimeout(() => scrollToBottom(), 100);
-            }
-        }
     };
 
 
@@ -1345,7 +1364,10 @@ const Dashboard = () => {
                         systemInstruction: (PERSONAS[persona] || PERSONAS.standard) + 
                             (pdfContext ? '\n\nCONTEXT FROM DOCUMENT:\n' + pdfContext : '') +
                             memoryContext + searchContext + chronosContext + langContext + urlContext,
-                        isSearchMode: isSearchMode
+                        isSearchMode: isSearchMode,
+                        userId: user.uid,
+                        sessionId: sessionId,
+                        workspaceId: activeWorkspace === 'team' ? 'zylron_team_shared' : user.uid
                     }),
                     signal: controller.signal
                 });

@@ -98,6 +98,43 @@ router.get('/list', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 📜 NEURAL HISTORY BRIDGE: Pulls directly from MongoDB for the Sidebar
+router.post('/history', async (req, res) => {
+    try {
+        const { userId, workspaceId } = req.body;
+        if (!userId) return res.status(400).json({ error: "User ID required" });
+
+        // Pull from MongoDB (The Product Source of Truth)
+        const sessions = await ChatHistory.aggregate([
+            { $match: { user: userId, workspaceId: workspaceId || userId } },
+            { $sort: { createdAt: 1 } },
+            {
+                $group: {
+                    _id: "$sessionId",
+                    titleData: { $first: "$title" },
+                    firstMessage: { $first: "$message" },
+                    createdAt: { $first: "$createdAt" },
+                    pinned: { $first: "$pinned" },
+                    folder: { $first: "$folder" }
+                }
+            },
+            { $sort: { createdAt: -1 } }
+        ]);
+
+        const formatted = sessions.map(s => ({
+            sessionId: s._id,
+            message: s.titleData || (s.firstMessage ? s.firstMessage.substring(0, 40) : "New Chat"),
+            createdAt: s.createdAt,
+            pinned: s.pinned || false,
+            folder: s.folder || 'personal'
+        }));
+
+        res.json(formatted);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 async function neuralCall(payload) {
     const models = [
         "gemini-2.5-flash", 
@@ -168,6 +205,10 @@ router.post('/proxy', async (req, res) => {
             try {
                 const existing = await ChatHistory.countDocuments({ user: userId, sessionId });
                 const isNew = existing === 0;
+                
+                // Calculate workspace context
+                const workspace = req.body.workspaceId || userId;
+
                 // Smart title: short messages → "Quick Chat", else first 5 words
                 let title = 'New Chat';
                 if (isNew) {
@@ -176,15 +217,17 @@ router.post('/proxy', async (req, res) => {
                         : prompt.trim().split(/\s+/).slice(0, 5).join(' ');
                 }
                 await ChatHistory.create({
-                    user: userId, sessionId,
-                    title, message: prompt,
+                    user: userId, 
+                    sessionId,
+                    workspaceId: workspace,
+                    title, 
+                    message: prompt,
                     response: responseText.substring(0, 2000)
                 });
 
                 // ✅ NEW: Vector Sync (Semantic Memory)
-                // Index the pair [User Query + AI Response] for future recall
                 const vectorPayload = `USER: ${prompt}\nAI: ${responseText}`;
-                await embedAndStore(vectorPayload, { userId, sessionId, title });
+                await embedAndStore(vectorPayload, { userId, sessionId, title, workspaceId: workspace });
 
             } catch (e) { console.warn("History/Vector Sync Issue:", e.message); }
         };
