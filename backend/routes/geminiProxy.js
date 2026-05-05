@@ -112,7 +112,7 @@ router.post('/history', async (req, res) => {
             {
                 $group: {
                     _id: "$sessionId",
-                    titleData: { $first: "$title" },
+                    message: { $first: "$title" },
                     firstMessage: { $first: "$message" },
                     createdAt: { $first: "$createdAt" },
                     pinned: { $first: "$pinned" },
@@ -271,18 +271,23 @@ router.post('/proxy', async (req, res) => {
                 // Calculate workspace context — handle both possible prop names
                 const workspace = req.body.workspaceId || req.body.workspace || userId;
 
-                // Smart title: short messages → "Quick Chat", else first 5 words
+                // Smart title: if current title is "New Chat" or too short, try to improve it
                 let title = 'New Chat';
-                if (isNew) {
+                const existingChat = await ChatHistory.findOne({ sessionId }).select('title');
+                
+                if (!existingChat || existingChat.title === 'New Chat') {
                     title = prompt.trim().length < 10
-                        ? 'New Chat'
+                        ? (existingChat?.title || 'New Chat')
                         : prompt.trim().split(/\s+/).slice(0, 5).join(' ');
+                } else {
+                    title = existingChat.title;
                 }
+
                 await ChatHistory.create({
                     user: userId, 
                     sessionId,
                     workspaceId: workspace,
-                    title, 
+                    title: title.charAt(0).toUpperCase() + title.slice(1), 
                     message: prompt,
                     response: responseText.substring(0, 2000)
                 });
