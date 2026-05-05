@@ -9,20 +9,23 @@ async function embedAndStore(text, metadata) {
     try {
         const index = pc.index(process.env.PINECONE_INDEX || 'zylron-index');
         const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
-        
-        const result = await model.embedContent(text);
-        const embedding = result.embedding.values;
+        try {
+            const result = await model.embedContent(text);
+            const embedding = result.embedding.values;
 
-        await index.upsert([{
-            id: `zylron_${metadata.sessionId || 'anon'}_${Date.now()}`,
-            values: embedding,
-            metadata: { ...metadata, text }
-        }]);
+            await index.upsert([{
+                id: `zylron_${metadata.sessionId || 'anon'}_${Date.now()}`,
+                values: embedding,
+                metadata: { ...metadata, text }
+            }]);
+        } catch (innerError) {
+            console.warn("⚠️ Semantic Sync Failed (Bypassing):", innerError.message);
+        }
         
-        return "✅ Document stored in Pinecone successfully!";
+        return "✅ Document sync attempted";
     } catch (error) {
-        console.error("❌ Pinecone Error:", error);
-        return `❌ Pinecone Error: ${error.message}`;
+        console.error("❌ Pinecone Sync Error (Graceful Bypass):", error);
+        return null;
     }
 }
 

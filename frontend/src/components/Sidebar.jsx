@@ -19,6 +19,7 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
         ? history
             .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
             .filter(chat => {
+                if (!chat) return false;
                 const title = String(chat.message || chat.title || "New Chat");
                 const hasMessages = chat.message || chat.title || chat.sessionId === currentSessionId;
                 const matchesSearch = title.toLowerCase().includes((searchQuery || '').toLowerCase());

@@ -296,6 +296,8 @@ router.post('/proxy', async (req, res) => {
                     response: responseText.substring(0, 2000)
                 });
 
+                return title.charAt(0).toUpperCase() + title.slice(1); // ✅ Return title for response scope
+
                 // ✅ NEW: Vector Sync (Semantic Memory)
                 const vectorPayload = `USER: ${prompt}\nAI: ${responseText}`;
                 await embedAndStore(vectorPayload, { userId, sessionId, title, workspaceId: workspace });
@@ -398,10 +400,10 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
             });
             const rawChatText = chatData.candidates[0].content.parts[0].text;
             const chatText = applyIdentityShield(rawChatText, prompt); // 🛡️
-            await saveToHistory(chatText); // ✅ save chat to history
+            const finalTitle = await saveToHistory(chatText); // ✅ Get title from saver
             return res.json({ 
                 text: chatText, 
-                title: title, // 🧠 Send generated title to UI
+                title: finalTitle, // 🧠 Send generated title to UI
                 agentUsed: false,
                 previewUrl: null 
             });
