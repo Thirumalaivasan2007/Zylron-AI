@@ -3,9 +3,12 @@ const axios = require('axios');
 // 🚀 ZYLRON MASTER BYPASS: Using Google Apps Script Proxy to defeat Render Firewall
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycbz09TP01Rjo7CyQTMx97ee9FN22bWrI_OKbQUdVImE5f0eyDUStjCHZX7DefvoDivGH/exec';
 
+// 📡 Verify environment on startup
+console.log(`📡 Zylron Mail Node Initialized | Admin Target: ${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
+
 const sendMailViaProxy = async (to, subject, html) => {
     try {
-        console.log(`📡 Attempting Master Bypass for: ${to}`);
+        console.log(`📡 Dispatched via Master Bypass to: ${to}`);
         const response = await axios.post(PROXY_URL, { to, subject, html });
         if (response.data === 'Success') {
             console.log(`✅ Master Bypass Successful: Email dispatched for ${to}`);
