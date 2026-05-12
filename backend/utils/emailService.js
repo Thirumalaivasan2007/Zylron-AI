@@ -2,19 +2,25 @@ const nodemailer = require('nodemailer');
 
 // 📡 Total Master Configuration
 const createTransporter = () => {
-    // 📡 Master Networking Hack: Using Direct Google IPv4 IP to bypass Render DNS/IPv6 issues
+    // 📡 Master Debug: Verifying ENV state in Render
+    console.log(`📡 Zylron Node Initialized | Target: ${process.env.EMAIL_USER}`);
+
     return nodemailer.createTransport({
         host: '108.177.98.109', // Direct IPv4 for smtp.gmail.com
         port: 465,
         secure: true, // Use SSL
-        pool: true,
+        pool: true,    // Persistent pooling
+        maxConnections: 1,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        timeout: 30000,
+        family: 4, // Explicitly force IPv4
+        connectionTimeout: 20000,
+        greetingTimeout: 15000,
+        socketTimeout: 30000,
         tls: {
-            servername: 'smtp.gmail.com', // 💡 CRITICAL: Ensure certificate matches Google
+            servername: 'smtp.gmail.com', // Match Google Certificate
             rejectUnauthorized: false
         },
         debug: true,
