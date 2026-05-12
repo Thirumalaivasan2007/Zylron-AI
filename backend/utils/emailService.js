@@ -1,26 +1,23 @@
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
-    // 🔍 Ultimate Debug: Verify variables are loading in Render
-    console.log(`📡 Initializing Zylron Mail Node: User=${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
+    // 📡 Grand Ultimate Debug: Verifying ENV state
+    console.log(`📡 Zylron Node Initialized | Target: ${process.env.EMAIL_USER}`);
 
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // STARTTLS
+        service: 'gmail',
+        pool: true, // Use connection pooling for better performance on cloud nodes
+        maxConnections: 1,
+        maxMessages: 5,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        connectionTimeout: 15000, // Increased to 15s for cloud latency
-        greetingTimeout: 10000,
-        socketTimeout: 20000,
-        // 🔥 CRITICAL: Force IPv4 to bypass Render's broken IPv6 ENETUNREACH error
+        // 🔥 CRITICAL: Force IPv4 for Render network compatibility
         family: 4,
-        tls: {
-            rejectUnauthorized: false,
-            minVersion: 'TLSv1.2'
-        }
+        timeout: 20000, // Socket timeout
+        debug: true, // Show detailed SMTP traffic in logs
+        logger: true  // Log everything to console
     });
 };
 
