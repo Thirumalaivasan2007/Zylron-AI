@@ -9,6 +9,7 @@ const fs = require('fs');
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const geminiProxy = require('./routes/geminiProxy');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -68,6 +69,7 @@ const omniVision = require('./routes/omniVision');
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/gemini', geminiProxy);
+app.use('/api/admin', adminRoutes);
 app.use('/api/devops', devopsWebhook); // 🤖 Zylron DevOps CI/CD Agent
 app.use('/api/omni', omniVision);      // 👁️ Omni-Vision Screen Awareness
 

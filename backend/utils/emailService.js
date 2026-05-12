@@ -1,4 +1,5 @@
 const axios = require('axios');
+const Log = require('../models/Log');
 
 // 🚀 ZYLRON MASTER BYPASS: Using Google Apps Script Proxy to defeat Render Firewall
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycbw43FrMqlOBTCfPZ-8jRHBUcnkyralOJb7sidBvlkZ6-XdQW8QOe2FxEuaakrFKP-sn/exec';
@@ -13,13 +14,34 @@ const sendMailViaProxy = async (to, subject, html, fromName) => {
     try {
         console.log(`📡 Dispatched via Master Bypass to: ${to} | Sender: ${fromName}`);
         const response = await axios.post(PROXY_URL, { to, subject, html, fromName });
+        
         if (response.data === 'Success') {
             console.log(`✅ Proxy Success: Email dispatched for ${to}`);
+            
+            // Log to Database
+            await Log.create({
+                type: 'email_sent',
+                status: 'success',
+                message: `Email dispatched successfully: ${subject}`,
+                target: to,
+                metadata: { fromName, subject }
+            }).catch(e => console.error("Logging failed:", e.message));
+            
             return true;
         }
         return false;
     } catch (error) {
         console.error('❌ Proxy Communication Failed:', error.message);
+        
+        // Log failure
+        await Log.create({
+            type: 'email_sent',
+            status: 'failed',
+            message: `Email dispatch failed: ${error.message}`,
+            target: to,
+            metadata: { subject }
+        }).catch(e => console.error("Logging failed:", e.message));
+
         throw error;
     }
 };
