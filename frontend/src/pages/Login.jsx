@@ -110,7 +110,7 @@ const Login = () => {
         try {
             const result = await loginWithPassword(email, password);
             if (result.success) {
-                const otpSent = await authAPI.sendOTP(email);
+                const otpSent = await authAPI.sendOTP(email, 'login');
                 if (otpSent.data && otpSent.data.success) {
                     setMsg({ type: 'success', text: 'Identity verified. Enter the 6-digit code sent to your email.' });
                     setView('otp');
@@ -122,7 +122,8 @@ const Login = () => {
             }
         } catch (err) {
             console.error(err);
-            setMsg({ type: 'error', text: 'Server error while sending OTP. Check backend configuration.' });
+            const errMsg = err.response?.data?.message || 'Server error while sending OTP. Check backend configuration.';
+            setMsg({ type: 'error', text: errMsg });
         } finally {
             setIsLoading(false);
         }
@@ -134,7 +135,7 @@ const Login = () => {
         setMsg({ type: '', text: '' });
 
         try {
-            const otpSent = await authAPI.sendOTP(email);
+            const otpSent = await authAPI.sendOTP(email, 'register');
             if (otpSent.data && otpSent.data.success) {
                 setMsg({ type: 'success', text: 'Check your email for the verification code.' });
                 setView('otp');
@@ -143,7 +144,8 @@ const Login = () => {
             }
         } catch (err) {
             console.error(err);
-            setMsg({ type: 'error', text: 'Server error while sending OTP. Check backend logs.' });
+            const errMsg = err.response?.data?.message || 'Server error while sending OTP. Check backend logs.';
+            setMsg({ type: 'error', text: errMsg });
         } finally {
             setIsLoading(false);
         }

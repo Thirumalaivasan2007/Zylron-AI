@@ -15,8 +15,15 @@ const generateToken = (id) => {
 // @route   POST /api/auth/send-otp
 const sendOTP = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, type } = req.body;
         if (!email) return res.status(400).json({ message: 'Email is required' });
+
+        // Ultimate Logic: Check if user already exists
+        const userExists = await User.findOne({ email });
+
+        if (type === 'register' && userExists) {
+            return res.status(400).json({ message: 'Identity already registered. Please login instead.' });
+        }
 
         // Generate 6-digit OTP
         const otp = otpGenerator.generate(6, { 
@@ -37,7 +44,7 @@ const sendOTP = async (req, res) => {
         if (sent) {
             res.status(200).json({ success: true, message: 'OTP sent successfully' });
         } else {
-            res.status(500).json({ message: 'Failed to send OTP email' });
+            res.status(500).json({ message: 'Failed to authenticate with Email Server. Check Admin config.' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });

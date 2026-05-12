@@ -22,7 +22,7 @@ api.interceptors.request.use(
 
 export const authAPI = {
     notifyLogin: (userData) => api.post('/auth/notify-login', userData),
-    sendOTP: (email) => api.post('/auth/send-otp', { email }),
+    sendOTP: (email, type) => api.post('/auth/send-otp', { email, type }),
     verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp })
 };
 
