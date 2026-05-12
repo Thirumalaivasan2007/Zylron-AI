@@ -15,7 +15,7 @@ const sendLoginNotification = async (userData) => {
         const transporter = createTransporter();
         const mailOptions = {
             from: `"Zylron Security" <${process.env.EMAIL_USER}>`,
-            to: 'thirumalaivasan944@gmail.com', // Admin Email
+            to: process.env.EMAIL_USER, // Admin Email
             subject: '🚨 New Login Detected on Zylron AI',
             html: `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #000; color: #fff; border-radius: 15px; border: 1px solid #10b981;">
@@ -41,7 +41,7 @@ const sendNewUserAdminAlert = async (userData) => {
         const transporter = createTransporter();
         const mailOptions = {
             from: `"Zylron SaaS Engine" <${process.env.EMAIL_USER}>`,
-            to: 'thirumalaivasan944@gmail.com', // Admin Email
+            to: process.env.EMAIL_USER, // Admin Email
             subject: '🔥 Zylron Alert: New User Registered!',
             html: `
                 <div style="font-family: 'Segoe UI', sans-serif; padding: 30px; background-color: #000; color: #fff; border-radius: 15px; border: 1px solid #06b6d4;">
