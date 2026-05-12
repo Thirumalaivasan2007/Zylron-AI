@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { spotifyAction } = require('../utils/spotifyService');
+const { calendarAction } = require('../utils/calendarService');
 const { protect } = require('../middleware/authMiddleware');
 
 /**
@@ -9,7 +10,7 @@ const { protect } = require('../middleware/authMiddleware');
  * @access  Private
  */
 router.post('/execute', protect, async (req, res) => {
-    const { provider, action, query } = req.body;
+    const { provider, action, query, details } = req.body;
 
     if (!provider || !action) {
         return res.status(400).json({ message: 'Provider and action are required' });
@@ -19,6 +20,8 @@ router.post('/execute', protect, async (req, res) => {
         let result;
         if (provider === 'spotify') {
             result = await spotifyAction(action, query);
+        } else if (provider === 'calendar') {
+            result = await calendarAction(action, details || { query });
         } else {
             return res.status(400).json({ message: 'Unsupported provider' });
         }
