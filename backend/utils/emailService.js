@@ -3,16 +3,16 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
     return nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false, // Use STARTTLS on port 587
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        connectionTimeout: 10000, // 10 seconds timeout
-        // Force IPv4 because Render free instances often have broken IPv6 outbound
-        // which causes ENETUNREACH errors when resolving smtp.gmail.com
-        family: 4 
+        connectionTimeout: 10000,
+        tls: {
+            rejectUnauthorized: false
+        }
     });
 };
 
