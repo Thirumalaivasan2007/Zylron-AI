@@ -2,23 +2,20 @@ const nodemailer = require('nodemailer');
 
 // 📡 Total Master Configuration
 const createTransporter = () => {
+    // 📡 Master Networking Hack: Using Direct Google IPv4 IP to bypass Render DNS/IPv6 issues
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // STARTTLS
-        pool: true,    // Reuse connections (Global Pool)
-        maxConnections: 1,
+        host: '108.177.98.109', // Direct IPv4 for smtp.gmail.com
+        port: 465,
+        secure: true, // Use SSL
+        pool: true,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        family: 4, // Force IPv4
-        connectionTimeout: 20000,
-        greetingTimeout: 15000,
-        socketTimeout: 30000,
+        timeout: 30000,
         tls: {
-            rejectUnauthorized: false,
-            minVersion: 'TLSv1.2'
+            servername: 'smtp.gmail.com', // 💡 CRITICAL: Ensure certificate matches Google
+            rejectUnauthorized: false
         },
         debug: true,
         logger: true
