@@ -163,11 +163,19 @@ const Login = () => {
             if (verified.data && verified.data.success) {
                 if (name) {
                     // Registration Flow
-                    const result = await registerWithEmailPassword(email, password);
-                    if (result.success) {
-                        navigate('/');
+                    // 1. Create User in Backend (triggers Admin Alert)
+                    const backendReg = await authAPI.registerUser({ name, email, password });
+                    
+                    if (backendReg.data) {
+                        // 2. Create User in Firebase
+                        const result = await registerWithEmailPassword(email, password);
+                        if (result.success) {
+                            navigate('/');
+                        } else {
+                            setMsg({ type: 'error', text: result.message });
+                        }
                     } else {
-                        setMsg({ type: 'error', text: result.message });
+                        setMsg({ type: 'error', text: 'Backend initialization failed.' });
                     }
                 } else {
                     // Login Flow (Firebase auth already succeeded before OTP)
@@ -178,7 +186,8 @@ const Login = () => {
             }
         } catch (err) {
             console.error(err);
-            setMsg({ type: 'error', text: 'Error verifying OTP. Please try again.' });
+            const errMsg = err.response?.data?.message || 'Error verifying OTP. Please try again.';
+            setMsg({ type: 'error', text: errMsg });
         } finally {
             setIsLoading(false);
         }

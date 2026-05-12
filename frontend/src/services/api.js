@@ -21,6 +21,7 @@ api.interceptors.request.use(
 );
 
 export const authAPI = {
+    registerUser: (userData) => api.post('/auth/register', userData),
     notifyLogin: (userData) => api.post('/auth/notify-login', userData),
     sendOTP: (email, type) => api.post('/auth/send-otp', { email, type }),
     verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp })
