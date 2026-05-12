@@ -72,7 +72,33 @@ export const AuthProvider = ({ children }) => {
             const result = await signInWithPopup(auth, facebookProvider);
             return { success: true, user: result.user };
         } catch (error) {
-            console.error('Facebook login error:', error.code);
+            return { success: false, message: error.message };
+        }
+    };
+
+    const registerWithEmailPassword = async (email, password) => {
+        try {
+            const result = await createUserWithEmailAndPassword(auth, email, password);
+            return { success: true, user: result.user };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    };
+
+    const loginWithPassword = async (email, password) => {
+        try {
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            return { success: true, user: result.user };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    };
+
+    const resetPassword = async (email) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+            return { success: true };
+        } catch (error) {
             return { success: false, message: error.message };
         }
     };
@@ -105,7 +131,10 @@ export const AuthProvider = ({ children }) => {
             user, 
             loginWithGoogle, 
             loginWithFacebook, 
-            loginWithEmail, 
+            loginWithEmail,
+            loginWithPassword,
+            registerWithEmailPassword,
+            resetPassword,
             logout, 
             loading 
         }}>
