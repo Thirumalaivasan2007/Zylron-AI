@@ -8,19 +8,22 @@ import {
     User,
     Loader2, 
     ArrowRight, 
-    Github, 
     Facebook, 
     Chrome, 
     AlertCircle,
     CheckCircle2,
     ShieldCheck,
-    ArrowLeft
+    ArrowLeft,
+    KeyRound
 } from 'lucide-react';
 import ZylronLogo from '../logo.png';
+import { auth } from '../config/firebase';
+import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { authAPI } from '../services/api';
 
 const Login = () => {
-    const [view, setView] = useState('login'); // login | register | forgot | otp
+    // default, password-login, register, forgot, otp
+    const [view, setView] = useState('default'); 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -32,10 +35,36 @@ const Login = () => {
     const { 
         loginWithGoogle, 
         loginWithFacebook, 
+        loginWithEmail,
         loginWithPassword, 
         registerWithEmailPassword, 
         resetPassword 
     } = useAuth();
+
+    useEffect(() => {
+        // Handle Email Link Sign-In Completion
+        if (isSignInWithEmailLink(auth, window.location.href)) {
+            let emailForSignIn = window.localStorage.getItem('emailForSignIn');
+            if (!emailForSignIn) {
+                emailForSignIn = window.prompt('Please provide your email for confirmation');
+            }
+            
+            setIsLoading(true);
+            signInWithEmailLink(auth, emailForSignIn, window.location.href)
+                .then(async (result) => {
+                    window.localStorage.removeItem('emailForSignIn');
+                    await authAPI.notifyLogin({ 
+                        name: result.user.displayName, 
+                        email: result.user.email 
+                    }).catch(err => console.error("Notification failed:", err));
+                    navigate('/');
+                })
+                .catch((error) => {
+                    setMsg({ type: 'error', text: error.message });
+                    setIsLoading(false);
+                });
+        }
+    }, [navigate]);
 
     const handleSocialLogin = async (provider) => {
         setIsLoading(true);
@@ -57,25 +86,46 @@ const Login = () => {
         }
     };
 
-    const handleLoginSubmit = async (e) => {
+    const handleMagicLinkSubmit = async (e) => {
         e.preventDefault();
+        if (!email) return;
+        
         setIsLoading(true);
         setMsg({ type: '', text: '' });
-
-        const result = await loginWithPassword(email, password);
+        
+        const result = await loginWithEmail(email);
         if (result.success) {
-            // Credentials correct, now trigger 2FA
-            const otpSent = await authAPI.sendOTP(email);
-            if (otpSent.data.success) {
-                setMsg({ type: 'success', text: 'Identity verified. Enter the 6-digit code sent to your email.' });
-                setView('otp');
-            } else {
-                setMsg({ type: 'error', text: 'Failed to send verification code. Try again.' });
-            }
+            setMsg({ type: 'success', text: 'Sign-in link sent! Check your inbox.' });
         } else {
             setMsg({ type: 'error', text: result.message });
         }
         setIsLoading(false);
+    };
+
+    const handlePasswordLoginSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setMsg({ type: '', text: '' });
+
+        try {
+            const result = await loginWithPassword(email, password);
+            if (result.success) {
+                const otpSent = await authAPI.sendOTP(email);
+                if (otpSent.data && otpSent.data.success) {
+                    setMsg({ type: 'success', text: 'Identity verified. Enter the 6-digit code sent to your email.' });
+                    setView('otp');
+                } else {
+                    setMsg({ type: 'error', text: 'Failed to send verification code. Try again.' });
+                }
+            } else {
+                setMsg({ type: 'error', text: result.message });
+            }
+        } catch (err) {
+            console.error(err);
+            setMsg({ type: 'error', text: 'Server error while sending OTP. Check backend configuration.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleRegisterSubmit = async (e) => {
@@ -83,15 +133,20 @@ const Login = () => {
         setIsLoading(true);
         setMsg({ type: '', text: '' });
 
-        // Trigger OTP verification before creating account
-        const otpSent = await authAPI.sendOTP(email);
-        if (otpSent.data.success) {
-            setMsg({ type: 'success', text: 'Check your email for the verification code.' });
-            setView('otp');
-        } else {
-            setMsg({ type: 'error', text: 'Registration verification failed. Please try again.' });
+        try {
+            const otpSent = await authAPI.sendOTP(email);
+            if (otpSent.data && otpSent.data.success) {
+                setMsg({ type: 'success', text: 'Check your email for the verification code.' });
+                setView('otp');
+            } else {
+                setMsg({ type: 'error', text: 'Registration verification failed. Please try again.' });
+            }
+        } catch (err) {
+            console.error(err);
+            setMsg({ type: 'error', text: 'Server error while sending OTP. Check backend logs.' });
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const handleOtpVerify = async (e) => {
@@ -101,23 +156,28 @@ const Login = () => {
         setIsLoading(true);
         setMsg({ type: '', text: '' });
 
-        const verified = await authAPI.verifyOTP(email, otp);
-        if (verified.data.success) {
-            if (view === 'otp' && password && name) {
-                // This was a registration flow
-                const result = await registerWithEmailPassword(email, password);
-                if (result.success) {
-                    navigate('/');
+        try {
+            const verified = await authAPI.verifyOTP(email, otp);
+            if (verified.data && verified.data.success) {
+                if (name) {
+                    // Registration Flow
+                    const result = await registerWithEmailPassword(email, password);
+                    if (result.success) {
+                        navigate('/');
+                    } else {
+                        setMsg({ type: 'error', text: result.message });
+                    }
                 } else {
-                    setMsg({ type: 'error', text: result.message });
-                    setIsLoading(false);
+                    // Login Flow (Firebase auth already succeeded before OTP)
+                    navigate('/');
                 }
             } else {
-                // This was a login flow (already authenticated via Firebase, just needed OTP)
-                navigate('/');
+                setMsg({ type: 'error', text: 'Invalid or expired security code.' });
             }
-        } else {
-            setMsg({ type: 'error', text: 'Invalid or expired security code.' });
+        } catch (err) {
+            console.error(err);
+            setMsg({ type: 'error', text: 'Error verifying OTP. Please try again.' });
+        } finally {
             setIsLoading(false);
         }
     };
@@ -134,6 +194,11 @@ const Login = () => {
             setMsg({ type: 'error', text: result.message });
         }
         setIsLoading(false);
+    };
+
+    const switchView = (newView) => {
+        setView(newView);
+        setMsg({ type: '', text: '' });
     };
 
     return (
@@ -198,9 +263,57 @@ const Login = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Login View */}
-                    {view === 'login' && (
-                        <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    {/* Default View (Magic Link + Social + Button to Password Login) */}
+                    {view === 'default' && (
+                        <div className="space-y-4">
+                            <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-12 pr-5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                                    />
+                                </div>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                                >
+                                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : <><span>Send Magic Link</span> <ArrowRight size={18} /></>}
+                                </motion.button>
+                            </form>
+
+                            <div className="relative my-6">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t border-white/5"></span>
+                                </div>
+                                <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-black text-gray-600">
+                                    <span className="bg-[#0b101b] px-4 rounded-full">Or</span>
+                                </div>
+                            </div>
+
+                            {/* Password Option Button */}
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => switchView('password-login')}
+                                className="w-full bg-white/[0.02] border border-emerald-500/30 text-emerald-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:bg-emerald-500/10"
+                            >
+                                <KeyRound size={18} />
+                                <span>Login with Password</span>
+                            </motion.button>
+                        </div>
+                    )}
+
+                    {/* Password Login View */}
+                    {view === 'password-login' && (
+                        <form onSubmit={handlePasswordLoginSubmit} className="space-y-4">
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                                 <input
@@ -224,7 +337,7 @@ const Login = () => {
                                 />
                             </div>
                             <div className="flex justify-end px-1">
-                                <button type="button" onClick={() => setView('forgot')} className="text-[11px] font-bold text-gray-500 hover:text-emerald-400 uppercase tracking-wider transition-colors">Forgot Password?</button>
+                                <button type="button" onClick={() => switchView('forgot')} className="text-[11px] font-bold text-gray-500 hover:text-emerald-400 uppercase tracking-wider transition-colors">Forgot Password?</button>
                             </div>
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
@@ -235,8 +348,13 @@ const Login = () => {
                             >
                                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <><span>Authorize Session</span> <ArrowRight size={18} /></>}
                             </motion.button>
-                            <p className="text-center text-xs text-gray-500 mt-6">
-                                New intelligence? <button type="button" onClick={() => setView('register')} className="text-emerald-400 font-bold hover:underline">Register Here</button>
+                            
+                            <button type="button" onClick={() => switchView('default')} className="w-full text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-2 hover:text-white transition-colors">
+                                <ArrowLeft size={14} /> Back to Magic Link
+                            </button>
+
+                            <p className="text-center text-xs text-gray-500 mt-6 border-t border-white/5 pt-6">
+                                New intelligence? <button type="button" onClick={() => switchView('register')} className="text-emerald-400 font-bold hover:underline">Register Here</button>
                             </p>
                         </form>
                     )}
@@ -286,8 +404,8 @@ const Login = () => {
                             >
                                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <><span>Initialize Identity</span> <ArrowRight size={18} /></>}
                             </motion.button>
-                            <button type="button" onClick={() => setView('login')} className="w-full text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-2 hover:text-white transition-colors">
-                                <ArrowLeft size={14} /> Back to Auth
+                            <button type="button" onClick={() => switchView('password-login')} className="w-full text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-2 hover:text-white transition-colors">
+                                <ArrowLeft size={14} /> Back to Login
                             </button>
                         </form>
                     )}
@@ -315,7 +433,7 @@ const Login = () => {
                             >
                                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <span>Send Reset Shield</span>}
                             </motion.button>
-                            <button type="button" onClick={() => setView('login')} className="w-full text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-2 hover:text-white transition-colors">
+                            <button type="button" onClick={() => switchView('password-login')} className="w-full text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-2 hover:text-white transition-colors">
                                 <ArrowLeft size={14} /> Back to Auth
                             </button>
                         </form>
@@ -349,13 +467,13 @@ const Login = () => {
                                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <span>Verify Security Code</span>}
                             </motion.button>
                             <div className="text-center">
-                                <button type="button" onClick={() => setView('login')} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors uppercase tracking-widest font-bold">Cancel Verification</button>
+                                <button type="button" onClick={() => switchView(name ? 'register' : 'password-login')} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors uppercase tracking-widest font-bold">Cancel Verification</button>
                             </div>
                         </form>
                     )}
 
-                    {/* Social Logins (Only on Login/Register) */}
-                    {(view === 'login' || view === 'register') && (
+                    {/* Social Logins (Only on Default/Magic Link View) */}
+                    {view === 'default' && (
                         <>
                             <div className="relative my-8">
                                 <div className="absolute inset-0 flex items-center">
