@@ -7,7 +7,10 @@ import {
     signOut, 
     sendSignInLinkToEmail, 
     isSignInWithEmailLink, 
-    signInWithEmailLink 
+    signInWithEmailLink,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail
 } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../config/firebase";
 import Loader from '../components/Loader';
