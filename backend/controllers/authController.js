@@ -105,7 +105,7 @@ const registerUser = async (req, res) => {
     }
 };
 
-// @desc    Authenticate a user
+// @desc    Authenticate a user (Initial Password Check)
 // @route   POST /api/auth/login
 const loginUser = async (req, res) => {
     try {
@@ -113,10 +113,31 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
-            // For now, we still notify login, but frontend will handle the 2FA flow
-            // before redirecting to dashboard.
+            // Password Correct! But don't give token yet.
+            // Notify admin about the attempt
             sendLoginNotification({ name: user.name, email: user.email });
 
+            res.json({
+                success: true,
+                requires2FA: true, // Tell frontend to start OTP flow
+                message: 'Identity confirmed. Please verify your OTP to proceed.'
+            });
+        } else {
+            res.status(401).json({ message: 'Invalid email or password' });
+        }
+    } catch (error) {
+        res.status(401).json({ message: error.message });
+    }
+};
+
+// @desc    Finalize Login after OTP verification
+// @route   POST /api/auth/login-verify
+const loginVerify = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (user) {
             res.json({
                 _id: user.id,
                 name: user.name,
@@ -124,10 +145,10 @@ const loginUser = async (req, res) => {
                 token: generateToken(user._id),
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
-        res.status(401).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -147,6 +168,7 @@ const notifyLogin = async (req, res) => {
 module.exports = {
     registerUser,
     loginUser,
+    loginVerify,
     notifyLogin,
     sendOTP,
     verifyOTP
