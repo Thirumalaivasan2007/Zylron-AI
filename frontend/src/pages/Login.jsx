@@ -108,21 +108,24 @@ const Login = () => {
         setMsg({ type: '', text: '' });
 
         try {
-            const result = await loginWithPassword(email, password);
-            if (result.success) {
+            // 1. First, check password with backend
+            const loginRes = await authAPI.loginUser({ email, password });
+            
+            if (loginRes.data && loginRes.data.requires2FA) {
+                // 2. Password correct, now trigger OTP
                 const otpSent = await authAPI.sendOTP(email, 'login');
                 if (otpSent.data && otpSent.data.success) {
-                    setMsg({ type: 'success', text: 'Identity verified. Enter the 6-digit code sent to your email.' });
+                    setMsg({ type: 'success', text: 'Identity confirmed. Please verify the 6-digit code sent to your email.' });
                     setView('otp');
                 } else {
-                    setMsg({ type: 'error', text: 'Failed to send verification code. Try again.' });
+                    setMsg({ type: 'error', text: 'Failed to send security code. Please try again.' });
                 }
             } else {
-                setMsg({ type: 'error', text: result.message });
+                setMsg({ type: 'error', text: 'Invalid identity credentials.' });
             }
         } catch (err) {
             console.error(err);
-            const errMsg = err.response?.data?.message || 'Server error while sending OTP. Check backend configuration.';
+            const errMsg = err.response?.data?.message || 'Login failed. Check your credentials.';
             setMsg({ type: 'error', text: errMsg });
         } finally {
             setIsLoading(false);
@@ -159,15 +162,15 @@ const Login = () => {
         setMsg({ type: '', text: '' });
 
         try {
+            // 1. Verify OTP with backend
             const verified = await authAPI.verifyOTP(email, otp);
+            
             if (verified.data && verified.data.success) {
                 if (name) {
-                    // Registration Flow
-                    // 1. Create User in Backend (triggers Admin Alert)
+                    // --- REGISTRATION FLOW ---
                     const backendReg = await authAPI.registerUser({ name, email, password });
                     
                     if (backendReg.data) {
-                        // 2. Create User in Firebase
                         const result = await registerWithEmailPassword(email, password);
                         if (result.success) {
                             navigate('/');
@@ -178,8 +181,24 @@ const Login = () => {
                         setMsg({ type: 'error', text: 'Backend initialization failed.' });
                     }
                 } else {
-                    // Login Flow (Firebase auth already succeeded before OTP)
-                    navigate('/');
+                    // --- LOGIN FLOW ---
+                    // 1. Finalize Login in Backend
+                    const loginFinalRes = await authAPI.loginVerify(email);
+                    
+                    if (loginFinalRes.data && loginFinalRes.data.token) {
+                        // 2. Store user data
+                        localStorage.setItem('user', JSON.stringify(loginFinalRes.data));
+                        
+                        // 3. Login to Firebase for session persistence
+                        const firebaseResult = await loginWithPassword(email, password);
+                        if (firebaseResult.success) {
+                            navigate('/');
+                        } else {
+                            setMsg({ type: 'error', text: 'Firebase session failed.' });
+                        }
+                    } else {
+                        setMsg({ type: 'error', text: 'Login finalization failed.' });
+                    }
                 }
             } else {
                 setMsg({ type: 'error', text: 'Invalid or expired security code.' });
