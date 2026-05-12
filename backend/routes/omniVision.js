@@ -65,6 +65,19 @@ router.post('/ask', async (req, res) => {
         const data = await response.json();
         const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Vision analysis failed.';
 
+        // Log the event
+        try {
+            const Log = require('../models/Log');
+            await Log.create({
+                type: 'omni_vision',
+                message: `Screen analysis: ${question.substring(0, 50)}...`,
+                status: 'success',
+                target: 'Omni-Vision'
+            });
+        } catch (logErr) {
+            console.error('Logging error:', logErr);
+        }
+
         return res.json({ answer, hasScreen: true });
 
     } catch (err) {

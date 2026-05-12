@@ -151,6 +151,19 @@ router.post('/github-webhook', async (req, res) => {
 
         console.log(`🔍 Commit Review (${commit.id.substring(0,7)}):`, review.substring(0, 200));
 
+        // Log the DevOps event
+        try {
+            const Log = require('../models/Log');
+            await Log.create({
+                type: 'devops_agent',
+                message: `Commit review: ${commit.message.substring(0, 50)}... [${review.includes('ISSUE_FOUND') ? 'ISSUE' : 'OK'}]`,
+                status: review.includes('ISSUE_FOUND') ? 'warning' : 'success',
+                target: `GitHub: ${repository.full_name}`
+            });
+        } catch (logErr) {
+            console.error('Logging error:', logErr);
+        }
+
         if (review.includes('ISSUE_FOUND')) {
             console.log('🚨 Issue found! Attempting auto-fix PR...');
             const branchName = `zylron-fix-${Date.now()}`;
