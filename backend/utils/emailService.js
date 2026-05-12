@@ -6,19 +6,27 @@ const PROXY_URL = 'https://script.google.com/macros/s/AKfycbz09TP01Rjo7CyQTMx97e
 // 📡 Verify environment on startup
 console.log(`📡 Zylron Mail Node Initialized | Admin Target: ${process.env.EMAIL_USER ? 'SET' : 'MISSING'}`);
 
+/**
+ * Core Proxy Logic: Bypasses SMTP restrictions using standard HTTPS (Port 443)
+ */
 const sendMailViaProxy = async (to, subject, html, fromName) => {
     try {
         console.log(`📡 Dispatched via Master Bypass to: ${to} | Sender: ${fromName}`);
         const response = await axios.post(PROXY_URL, { to, subject, html, fromName });
         if (response.data === 'Success') {
+            console.log(`✅ Proxy Success: Email dispatched for ${to}`);
             return true;
         }
         return false;
     } catch (error) {
-        throw error; // Let the caller handle the error log
+        console.error('❌ Proxy Communication Failed:', error.message);
+        throw error;
     }
 };
 
+/**
+ * Log in notification for Admin
+ */
 const sendLoginNotification = async (userData) => {
     try {
         const html = `
@@ -39,6 +47,9 @@ const sendLoginNotification = async (userData) => {
     }
 };
 
+/**
+ * Registration alert for Admin
+ */
 const sendNewUserAdminAlert = async (userData) => {
     try {
         const html = `
@@ -58,6 +69,9 @@ const sendNewUserAdminAlert = async (userData) => {
     }
 };
 
+/**
+ * OTP Verification Email for Users
+ */
 const sendOTPEmail = async (email, otp) => {
     try {
         const html = `
