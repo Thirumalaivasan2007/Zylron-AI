@@ -1,26 +1,23 @@
 const nodemailer = require('nodemailer');
 
+// 📡 Total Master Configuration
 const createTransporter = () => {
-    // 📡 Total Master Debug: Verifying ENV state
-    console.log(`📡 Zylron Node Initialized | Target: ${process.env.EMAIL_USER}`);
-
     return nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
-        secure: false, // Use STARTTLS (Port 587)
-        pool: true,    // Reuse connections
+        secure: false, // STARTTLS
+        pool: true,    // Reuse connections (Global Pool)
         maxConnections: 1,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        // 🔥 CRITICAL: Force IPv4 for Render network compatibility
-        family: 4,
-        connectionTimeout: 15000,
-        greetingTimeout: 10000,
+        family: 4, // Force IPv4
+        connectionTimeout: 20000,
+        greetingTimeout: 15000,
         socketTimeout: 30000,
         tls: {
-            rejectUnauthorized: false, // Bypass SSL certificate issues
+            rejectUnauthorized: false,
             minVersion: 'TLSv1.2'
         },
         debug: true,
@@ -28,9 +25,20 @@ const createTransporter = () => {
     });
 };
 
+// Initialize the global transporter instance
+const transporter = createTransporter();
+
+// Auto-Verify connection on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('❌ Zylron Mail Node: Connection Failed!', error);
+    } else {
+        console.log('✅ Zylron Mail Node: Ready for secure transmissions');
+    }
+});
+
 const sendLoginNotification = async (userData) => {
     try {
-        const transporter = createTransporter();
         const mailOptions = {
             from: `"Zylron Security" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER, // Admin Email
@@ -56,7 +64,6 @@ const sendLoginNotification = async (userData) => {
 
 const sendNewUserAdminAlert = async (userData) => {
     try {
-        const transporter = createTransporter();
         const mailOptions = {
             from: `"Zylron SaaS Engine" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER, // Admin Email
@@ -81,7 +88,6 @@ const sendNewUserAdminAlert = async (userData) => {
 
 const sendOTPEmail = async (email, otp) => {
     try {
-        const transporter = createTransporter();
         const mailOptions = {
             from: `"Zylron Security Shield" <${process.env.EMAIL_USER}>`,
             to: email,
