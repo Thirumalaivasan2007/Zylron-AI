@@ -73,7 +73,10 @@ const rateLimit = require('express-rate-limit');
 
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  xFrameOptions: false
 }));
 app.use(mongoSanitize());
 app.use(express.json());
