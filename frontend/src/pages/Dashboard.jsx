@@ -377,34 +377,103 @@ const Dashboard = () => {
     const [isPro, setIsPro] = useState(localStorage.getItem('zylron_is_pro') === 'true');
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
     const handleUpgradeToPro = async () => {
-        setFeedbackToast("💳 Connecting to Stripe Secure Gateway...");
+        setFeedbackToast("💳 Connecting to Razorpay Secure Gateway...");
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+            alert("Razorpay Checkout SDK failed to load. Please check your internet connection.");
+            setFeedbackToast(null);
+            return;
+        }
+
         try {
-            // Real Logic: Call your backend to create a Stripe Checkout Session
-            const response = await fetch('/api/create-checkout-session', {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            const response = await fetch('https://zylron-agent-ai.onrender.com/api/payment/order', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.uid, email: user.email })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
             
-            const session = await response.json();
-            
-            // Redirect to Stripe Checkout
-            if (session.url) {
-                window.location.href = session.url;
-            } else {
-                // Fallback for demo: if no backend, simulate success after redirect attempt
-                throw new Error("No backend session found");
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Order creation failed.");
             }
+
+            const options = {
+                key: data.keyId,
+                amount: data.amount,
+                currency: "INR",
+                name: "Zylron AI",
+                description: "Zylron Pro Subscription Node",
+                order_id: data.orderId,
+                handler: async function (resp) {
+                    setFeedbackToast("⏳ Verifying transaction signature...");
+                    try {
+                        const verifyRes = await fetch('https://zylron-agent-ai.onrender.com/api/payment/verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id: resp.razorpay_order_id,
+                                razorpay_payment_id: resp.razorpay_payment_id,
+                                razorpay_signature: resp.razorpay_signature
+                            })
+                        });
+
+                        const verifyData = await verifyRes.json();
+                        if (verifyRes.ok && verifyData.success) {
+                            setIsPro(true);
+                            localStorage.setItem('zylron_is_pro', 'true');
+                            
+                            // Update local storage user profile
+                            const localUserObj = JSON.parse(localStorage.getItem('user') || '{}');
+                            localUserObj.plan = 'pro';
+                            localStorage.setItem('user', JSON.stringify(localUserObj));
+
+                            setIsUpgradeModalOpen(false);
+                            setFeedbackToast("🎉 Pro Status Activated (Live Sync)");
+                            setTimeout(() => setFeedbackToast(null), 4000);
+                        } else {
+                            throw new Error(verifyData.message || "Signature check failed.");
+                        }
+                    } catch (err) {
+                        alert("Signature Verification Failed: " + err.message);
+                        setFeedbackToast(null);
+                    }
+                },
+                prefill: {
+                    name: data.user.name,
+                    email: data.user.email,
+                },
+                theme: {
+                    color: "#06b6d4",
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (paymentFailedResp) {
+                alert("Payment Failed: " + paymentFailedResp.error.description);
+                setFeedbackToast(null);
+            });
+            rzp.open();
         } catch (err) {
-            console.warn("Stripe Backend not detected, using Secure Sandbox fallback.");
-            setTimeout(() => {
-                setIsPro(true);
-                localStorage.setItem('zylron_is_pro', 'true');
-                setIsUpgradeModalOpen(false);
-                setFeedbackToast("🎉 Pro Status Activated (Sandbox Mode)");
-                setTimeout(() => setFeedbackToast(null), 4000);
-            }, 2000);
+            console.error("Razorpay integration error:", err);
+            alert("Could not initialize secure gateway: " + err.message);
+            setFeedbackToast(null);
         }
     };
 

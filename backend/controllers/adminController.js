@@ -8,12 +8,16 @@ const { sendMailViaProxy } = require('../utils/emailService');
 const getStats = async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
+        const proUsers = await User.countDocuments({ plan: 'pro' });
+        const totalRevenue = proUsers * 499; // Each upgrades cost ₹499
         const totalEmails = await Log.countDocuments({ type: 'email_sent', status: 'success' });
         const failedEmails = await Log.countDocuments({ type: 'email_sent', status: 'failed' });
         const loginAttempts = await Log.countDocuments({ type: 'login_attempt' });
 
         res.json({
             totalUsers,
+            proUsers,
+            totalRevenue,
             totalEmails,
             failedEmails,
             loginAttempts
