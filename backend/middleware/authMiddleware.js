@@ -22,6 +22,10 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'User not found' });
             }
 
+            if (req.user.isBanned) {
+                return res.status(403).json({ message: 'Access Denied: Your account has been suspended by the administrator.' });
+            }
+
             next();
         } catch (error) {
             console.error("Auth Token Error:", error.message);

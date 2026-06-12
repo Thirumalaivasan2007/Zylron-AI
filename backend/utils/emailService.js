@@ -120,4 +120,5 @@ module.exports = {
     sendLoginNotification,
     sendNewUserAdminAlert,
     sendOTPEmail,
+    sendMailViaProxy,
 };

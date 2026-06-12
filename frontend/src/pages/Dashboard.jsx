@@ -71,6 +71,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Joyride } from 'react-joyride';
 import CodePreviewModal from '../components/CodePreviewModal';
 import CustomPersonaModal from '../components/CustomPersonaModal';
+import DeveloperPortalModal from '../components/DeveloperPortalModal';
+import HelpCenterModal from '../components/HelpCenterModal';
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -288,6 +290,8 @@ const Dashboard = () => {
     const [isTourActive, setIsTourActive] = useState(false);
     const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
     const [isCustomPersonaModalOpen, setIsCustomPersonaModalOpen] = useState(false);
+    const [isDevPortalOpen, setIsDevPortalOpen] = useState(false);
+    const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
     const [previewCode, setPreviewCode] = useState('');
     const [credits, setCredits] = useState(() => {
         const today = new Date().toDateString();
@@ -1815,6 +1819,8 @@ const Dashboard = () => {
                     onExportMD={exportToMarkdown}
                     onTour={() => setIsTourActive(true)}
                     onAdmin={() => setIsAdminModalOpen(true)}
+                    onDevPortal={() => setIsDevPortalOpen(true)}
+                    onHelpCenter={() => setIsHelpCenterOpen(true)}
                 />
             </div>
 
@@ -3026,6 +3032,19 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
+            
+            {/* B2B Developer Portal Modal */}
+            <DeveloperPortalModal 
+                isOpen={isDevPortalOpen} 
+                onClose={() => setIsDevPortalOpen(false)} 
+                isPro={isPro} 
+            />
+
+            {/* Help & Support Center Modal */}
+            <HelpCenterModal 
+                isOpen={isHelpCenterOpen} 
+                onClose={() => setIsHelpCenterOpen(false)} 
+            />
                 </div>
             </div>
         </React.Fragment>

@@ -74,6 +74,8 @@ app.use('/api/devops', devopsWebhook); // 🤖 Zylron DevOps CI/CD Agent
 app.use('/api/omni', omniVision);      // 👁️ Omni-Vision Screen Awareness
 app.use('/api/voice', require('./routes/voiceRoutes'));
 app.use('/api/actions', require('./routes/actionRoutes'));
+app.use('/api/v1', require('./routes/publicApiRoutes'));
+app.use('/api/support', require('./routes/supportRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)

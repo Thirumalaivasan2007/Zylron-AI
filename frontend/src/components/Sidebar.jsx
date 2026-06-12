@@ -1,7 +1,7 @@
 import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, deleteSession, togglePinSession, updateSessionFolder, credits = 0, xp = 0, onShare, onExportPDF, onExportMD, onTour, onAdmin, isPro = false, onUpgrade, activeWorkspace = 'personal', onWorkspaceChange }) => {
+const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, deleteSession, togglePinSession, updateSessionFolder, credits = 0, xp = 0, onShare, onExportPDF, onExportMD, onTour, onAdmin, isPro = false, onUpgrade, activeWorkspace = 'personal', onWorkspaceChange, onDevPortal, onHelpCenter }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFolder, setActiveFolder] = useState(() => localStorage.getItem('zylron_active_folder') || 'all');
 
@@ -261,6 +261,23 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                         style={{ width: isPro ? '100%' : `${(credits/50)*100}%` }}
                     ></div>
                 </div>
+
+                {/* Developer Portal & Help Center Triggers */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                    <button 
+                        onClick={onDevPortal}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
+                    >
+                        <ShieldCheck size={12} /> Developer API
+                    </button>
+                    <button 
+                        onClick={onHelpCenter}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
+                    >
+                        <HelpCircle size={12} /> Help Center
+                    </button>
+                </div>
+
                 <button 
                     onClick={onAdmin}
                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-widest"

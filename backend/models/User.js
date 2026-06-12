@@ -20,6 +20,15 @@ const userSchema = mongoose.Schema(
             type: String,
             enum: ['user', 'admin'],
             default: 'user'
+        },
+        isBanned: {
+            type: Boolean,
+            default: false
+        },
+        plan: {
+            type: String,
+            enum: ['free', 'pro'],
+            default: 'free'
         }
     },
     {
