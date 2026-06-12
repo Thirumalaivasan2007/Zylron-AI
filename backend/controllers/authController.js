@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const Otp = require('../models/Otp');
+const Device = require('../models/Device');
+const Log = require('../models/Log');
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 const { sendOTPEmail, sendNewUserAdminAlert, sendLoginNotification, sendMailViaProxy } = require('../utils/emailService');
@@ -136,10 +138,80 @@ const loginUser = async (req, res) => {
 // @route   POST /api/auth/login-verify
 const loginVerify = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, deviceInfo } = req.body;
         const user = await User.findOne({ email });
 
         if (user) {
+            // Fingerprint Device Radar
+            if (deviceInfo && deviceInfo.fingerprint) {
+                // 1. Check Impossible Travel
+                const lastDevice = await Device.findOne({ userId: user._id }).sort({ lastActive: -1 });
+                if (lastDevice) {
+                    const diffTime = Date.now() - new Date(lastDevice.lastActive).getTime();
+                    const sameLocation = lastDevice.city === deviceInfo.city && lastDevice.country === deviceInfo.country;
+                    
+                    if (!sameLocation && diffTime < 5 * 60 * 1000) {
+                        // Impossible travel alert!
+                        const timeDiffMin = Math.round(diffTime / 1000 / 60);
+                        const alertMessage = `🛡️ Impossible Travel Detected: User ${user.email} logged in from ${deviceInfo.city}, ${deviceInfo.country} (IP: ${deviceInfo.ipAddress}) only ${timeDiffMin} minutes after activity in ${lastDevice.city}, ${lastDevice.country} (IP: ${lastDevice.ipAddress}).`;
+                        
+                        const securityLog = await Log.create({
+                            type: 'security_alert',
+                            status: 'warning',
+                            message: alertMessage,
+                            target: user.email,
+                            metadata: {
+                                userId: user._id,
+                                currentDevice: deviceInfo,
+                                previousDevice: {
+                                    browser: lastDevice.browser,
+                                    os: lastDevice.os,
+                                    ipAddress: lastDevice.ipAddress,
+                                    city: lastDevice.city,
+                                    country: lastDevice.country,
+                                    lastActive: lastDevice.lastActive
+                                }
+                            }
+                        });
+
+                        // Broadcast via socket.io to admin
+                        const io = req.app.get('socketio');
+                        if (io) {
+                            io.emit('telemetry_alert', {
+                                type: 'impossible_travel',
+                                log: securityLog
+                            });
+                        }
+                    }
+                }
+
+                // 2. Upsert device
+                await Device.findOneAndUpdate(
+                    { userId: user._id, deviceFingerprint: deviceInfo.fingerprint },
+                    {
+                        browser: deviceInfo.browser || 'Unknown Browser',
+                        os: deviceInfo.os || 'Unknown OS',
+                        ipAddress: deviceInfo.ipAddress || '127.0.0.1',
+                        city: deviceInfo.city || 'Unknown City',
+                        country: deviceInfo.country || 'Unknown Country',
+                        lastActive: new Date(),
+                        isTrusted: true
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+
+            // Broadcast successful login telemetry via socket.io
+            const io = req.app.get('socketio');
+            if (io) {
+                io.emit('telemetry_login', {
+                    userId: user._id,
+                    email: user.email,
+                    name: user.name,
+                    device: deviceInfo || {}
+                });
+            }
+
             res.json({
                 _id: user.id,
                 name: user.name,
@@ -157,11 +229,58 @@ const loginVerify = async (req, res) => {
 // @desc    Notify admin of a Firebase/Social login
 const notifyLogin = async (req, res) => {
     try {
-        const { name, email } = req.body;
+        const { name, email, deviceInfo } = req.body;
         if (!email) return res.status(400).json({ message: 'Email required' });
 
         await sendLoginNotification({ name, email });
+
+        // Upsert device on social login as well if deviceInfo is sent
+        if (deviceInfo && deviceInfo.fingerprint) {
+            const user = await User.findOne({ email });
+            if (user) {
+                await Device.findOneAndUpdate(
+                    { userId: user._id, deviceFingerprint: deviceInfo.fingerprint },
+                    {
+                        browser: deviceInfo.browser || 'Unknown Browser',
+                        os: deviceInfo.os || 'Unknown OS',
+                        ipAddress: deviceInfo.ipAddress || '127.0.0.1',
+                        city: deviceInfo.city || 'Unknown City',
+                        country: deviceInfo.country || 'Unknown Country',
+                        lastActive: new Date(),
+                        isTrusted: true
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+        }
+
         res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user's connected devices
+// @route   GET /api/auth/devices
+const getDevices = async (req, res) => {
+    try {
+        const devices = await Device.find({ userId: req.user._id }).sort({ lastActive: -1 });
+        res.status(200).json(devices);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Revoke a device
+// @route   DELETE /api/auth/devices/:id
+const revokeDevice = async (req, res) => {
+    try {
+        const device = await Device.findOne({ _id: req.params.id, userId: req.user._id });
+        if (!device) {
+            return res.status(404).json({ message: 'Device not found' });
+        }
+        await Device.deleteOne({ _id: req.params.id });
+        res.status(200).json({ success: true, message: 'Device revoked successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -173,5 +292,7 @@ module.exports = {
     loginVerify,
     notifyLogin,
     sendOTP,
-    verifyOTP
+    verifyOTP,
+    getDevices,
+    revokeDevice
 };

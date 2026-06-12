@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, loginVerify, notifyLogin, sendOTP, verifyOTP } = require('../controllers/authController');
+const { registerUser, loginUser, loginVerify, notifyLogin, sendOTP, verifyOTP, getDevices, revokeDevice } = require('../controllers/authController');
 const { getApiKeys, generateApiKey, revokeApiKey } = require('../controllers/apiKeysController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -15,5 +15,9 @@ router.post('/verify-otp', verifyOTP);
 router.get('/api-keys', protect, getApiKeys);
 router.post('/api-keys', protect, generateApiKey);
 router.delete('/api-keys/:id', protect, revokeApiKey);
+
+// Zero-Trust Connected Devices Endpoints
+router.get('/devices', protect, getDevices);
+router.delete('/devices/:id', protect, revokeDevice);
 
 module.exports = router;

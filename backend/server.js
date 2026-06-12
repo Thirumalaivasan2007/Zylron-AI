@@ -15,6 +15,9 @@ const geminiProxy = require('./routes/geminiProxy');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
 
 // 1. Unified CORS Configuration
 const allowedOrigins = [
@@ -42,6 +45,26 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Handle preflight
+
+const io = new Server(server, {
+  cors: corsOptions
+});
+app.set('socketio', io);
+const socketManager = require('./utils/socketManager');
+socketManager.init(io);
+
+io.on('connection', (socket) => {
+  console.log(`📡 Telemetry Socket Connected: ${socket.id}`);
+  
+  socket.on('join_admin', () => {
+    socket.join('admin_channel');
+    console.log(`👑 Admin joined live telemetry room: ${socket.id}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`📡 Telemetry Socket Disconnected: ${socket.id}`);
+  });
+});
 
 // Security Hardening Middleware
 const helmet = require('helmet');
@@ -158,4 +181,4 @@ async function listAvailableModels() {
 listAvailableModels();
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT} across all networks`));
+server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT} across all networks`));

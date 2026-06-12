@@ -28,4 +28,13 @@ const logSchema = mongoose.Schema(
     }
 );
 
+logSchema.post('save', function(doc) {
+    try {
+        const socketManager = require('../utils/socketManager');
+        socketManager.emitLog(doc);
+    } catch (e) {
+        console.error("Socket emit failed in Log model:", e.message);
+    }
+});
+
 module.exports = mongoose.model('Log', logSchema);

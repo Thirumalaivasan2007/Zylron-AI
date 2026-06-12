@@ -8,4 +8,13 @@ const crashLogSchema = new mongoose.Schema({
   status: { type: String, enum: ['PENDING', 'FIX_GENERATED', 'RESOLVED'], default: 'PENDING' }
 }, { timestamps: true });
 
+crashLogSchema.post('save', function(doc) {
+    try {
+        const socketManager = require('../utils/socketManager');
+        socketManager.emitCrash(doc);
+    } catch (e) {
+        console.error("Socket emit failed in CrashLog model:", e.message);
+    }
+});
+
 module.exports = mongoose.model('CrashLog', crashLogSchema);

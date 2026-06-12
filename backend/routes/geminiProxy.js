@@ -6,6 +6,9 @@ const fs = require('fs');
 const { toolDefinitions, toolHandlers } = require('../utils/agentTools');
 const ChatHistory = require('../models/ChatHistory');
 const { embedAndStore, queryVector } = require('../utils/vectorStore');
+const { protect } = require('../middleware/authMiddleware');
+const Log = require('../models/Log');
+const { sendMailViaProxy } = require('../utils/emailService');
 
 const API_KEY = (process.env.GEMINI_API_KEY || "").trim();
 const OMNI_SNAPSHOT_PATH = path.join(__dirname, '..', '..', 'desktop', 'omni_snapshot.jpg');
@@ -185,6 +188,69 @@ router.delete('/delete/:sessionId', async (req, res) => {
     }
 });
 
+async function callOllama(payload) {
+    try {
+        console.log("⚠️ Gemini API failed. Falling back to local Ollama...");
+        
+        let model = "llama3";
+        try {
+            const tagsRes = await fetch("http://localhost:11434/api/tags");
+            if (tagsRes.ok) {
+                const tagsData = await tagsRes.json();
+                if (tagsData.models && tagsData.models.length > 0) {
+                    model = tagsData.models[0].name;
+                    console.log(`🤖 Ollama: Found local model "${model}"`);
+                }
+            }
+        } catch (e) {
+            console.warn("⚠️ Ollama not running or could not fetch models:", e.message);
+        }
+
+        const messages = [];
+        if (payload.contents) {
+            payload.contents.forEach(content => {
+                const role = content.role === 'model' ? 'assistant' : 'user';
+                const textParts = content.parts ? content.parts.map(p => p.text || "").join("\n") : "";
+                messages.push({ role, content: textParts });
+            });
+        }
+
+        console.log(`📡 Sending chat request to Ollama (${model})...`);
+        const response = await fetch("http://localhost:11434/api/chat", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: messages,
+                stream: false
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ollama responded with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const responseText = data.message?.content || "";
+        console.log("✅ Ollama responded successfully!");
+
+        return {
+            candidates: [
+                {
+                    content: {
+                        parts: [
+                            { text: responseText }
+                        ]
+                    }
+                }
+            ]
+        };
+    } catch (err) {
+        console.error("❌ Ollama fallback failed:", err.message);
+        throw err;
+    }
+}
+
 async function neuralCall(payload) {
     const models = [
         "gemini-2.5-flash", 
@@ -239,15 +305,61 @@ async function neuralCall(payload) {
         }
     }
 
-    throw new Error(`⏳ API Link Issue: ${lastError?.message || "All models busy"}. Please wait 10s.`);
+    try {
+        const ollamaData = await callOllama(payload);
+        return ollamaData;
+    } catch (ollamaErr) {
+        throw new Error(`⏳ API Link Issue: ${lastError?.message || "All models busy"} & Ollama Fallback Failed: ${ollamaErr.message}. Please wait 10s.`);
+    }
 }
 
-router.post('/proxy', async (req, res) => {
+router.post('/proxy', protect, async (req, res) => {
     console.log("🤝 ZYLON CREW: Swarm Mode (Stable) Initiated...");
     try {
         const { prompt, history = [], sessionId, userId, systemInstruction, persona, image } = req.body;
         let agentUsed = false;
         let previewUrl = null;
+
+        // Daily limit check for Free plan
+        if (req.user.plan !== 'pro') {
+            const startOfDay = new Date();
+            startOfDay.setHours(0,0,0,0);
+            
+            const dailyMessages = await ChatHistory.countDocuments({
+                user: req.user._id,
+                createdAt: { $gte: startOfDay }
+            });
+
+            if (dailyMessages >= 50) {
+                // Check if upgrade email already sent today
+                const emailSentToday = await Log.findOne({
+                    type: 'email_sent',
+                    target: req.user.email,
+                    message: { $regex: /Power User/i },
+                    createdAt: { $gte: startOfDay }
+                });
+
+                if (!emailSentToday) {
+                    const upgradeHtml = `
+                        <div style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:40px;border-radius:16px;max-width:600px;margin:0 auto">
+                            <h1 style="color:#06b6d4;font-size:24px">⚡ Daily Limit Exhausted: Upgrade to Zylron Pro! 🚀</h1>
+                            <p style="color:#94a3b8;line-height:1.7">You have hit your daily limit of <strong>50 free intelligence messages</strong>.</p>
+                            <p style="color:#e2e8f0;line-height:1.7">Level up to <strong style="color:#06b6d4">Zylron Pro</strong> to unlock unlimited threads, developer APIs, OS-level recall logging, and premium voice models.</p>
+                            <div style="margin: 30px 0; text-align: center;">
+                                <a href="http://localhost:3000/dashboard" style="background:#06b6d4;color:#0f172a;padding:12px 24px;border-radius:8px;font-weight:bold;text-decoration:none;">Upgrade Now</a>
+                            </div>
+                            <p style="color:#64748b;font-size:12px;margin-top:30px">Zylron Neural CRM · Drip Engine v1.0</p>
+                        </div>
+                    `;
+                    sendMailViaProxy(req.user.email, '⚡ Zylron AI: Daily Message Limit Hit (Upgrade to Pro)', upgradeHtml, 'Zylron CRM').catch(e => console.error("Drip Trigger 2 error:", e.message));
+                }
+
+                return res.status(429).json({
+                    error: '🛡️ Limit Alert: You have hit your 50 messages/day limit. Upgrade to Pro for unlimited intelligence access.',
+                    limitExceeded: true
+                });
+            }
+        }
 
         // 🖼️ User Uploaded Image Handling (Multimodal)
         let userImagePart = null;

@@ -1,5 +1,7 @@
 const ChatHistory = require('../models/ChatHistory');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Log = require('../models/Log');
+const { sendMailViaProxy } = require('../utils/emailService');
 
 // 1. Initialize official Gemini SDK (ensure key is trimmed)
 const apiKey = (process.env.GEMINI_API_KEY || "").trim();
@@ -34,6 +36,47 @@ const chatWithAI = async (req, res) => {
 
         if (!message || !sessionId) {
             return res.status(400).json({ message: 'Message and Session ID are required' });
+        }
+
+        // Daily limit check for Free plan
+        if (req.user.plan !== 'pro') {
+            const startOfDay = new Date();
+            startOfDay.setHours(0,0,0,0);
+            
+            const dailyMessages = await ChatHistory.countDocuments({
+                user: req.user._id,
+                createdAt: { $gte: startOfDay }
+            });
+
+            if (dailyMessages >= 50) {
+                // Check if upgrade email already sent today
+                const emailSentToday = await Log.findOne({
+                    type: 'email_sent',
+                    target: req.user.email,
+                    message: { $regex: /Power User/i },
+                    createdAt: { $gte: startOfDay }
+                });
+
+                if (!emailSentToday) {
+                    const upgradeHtml = `
+                        <div style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:40px;border-radius:16px;max-width:600px;margin:0 auto">
+                            <h1 style="color:#06b6d4;font-size:24px">⚡ Daily Limit Exhausted: Upgrade to Zylron Pro! 🚀</h1>
+                            <p style="color:#94a3b8;line-height:1.7">You have hit your daily limit of <strong>50 free intelligence messages</strong>.</p>
+                            <p style="color:#e2e8f0;line-height:1.7">Level up to <strong style="color:#06b6d4">Zylron Pro</strong> to unlock unlimited threads, developer APIs, OS-level recall logging, and premium voice models.</p>
+                            <div style="margin: 30px 0; text-align: center;">
+                                <a href="http://localhost:3000/dashboard" style="background:#06b6d4;color:#0f172a;padding:12px 24px;border-radius:8px;font-weight:bold;text-decoration:none;">Upgrade Now</a>
+                            </div>
+                            <p style="color:#64748b;font-size:12px;margin-top:30px">Zylron Neural CRM · Drip Engine v1.0</p>
+                        </div>
+                    `;
+                    sendMailViaProxy(req.user.email, '⚡ Zylron AI: Daily Message Limit Hit (Upgrade to Pro)', upgradeHtml, 'Zylron CRM').catch(e => console.error("Drip Trigger 2 error:", e.message));
+                }
+
+                return res.status(429).json({
+                    message: '🛡️ Limit Alert: You have hit your 50 messages/day limit. Upgrade to Pro for unlimited intelligence access.',
+                    limitExceeded: true
+                });
+            }
         }
 
         // Get AI Response

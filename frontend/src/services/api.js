@@ -22,11 +22,13 @@ api.interceptors.request.use(
 
 export const authAPI = {
     loginUser: (credentials) => api.post('/auth/login', credentials),
-    loginVerify: (email) => api.post('/auth/login-verify', { email }),
+    loginVerify: (email, deviceInfo) => api.post('/auth/login-verify', { email, deviceInfo }),
     registerUser: (userData) => api.post('/auth/register', userData),
     notifyLogin: (userData) => api.post('/auth/notify-login', userData),
     sendOTP: (email, type) => api.post('/auth/send-otp', { email, type }),
-    verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp })
+    verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp }),
+    getDevices: () => api.get('/auth/devices'),
+    revokeDevice: (id) => api.delete(`/auth/devices/${id}`)
 };
 
 export default api;

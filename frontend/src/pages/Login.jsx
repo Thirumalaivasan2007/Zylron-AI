@@ -20,6 +20,8 @@ import ZylronLogo from '../logo.png';
 import { auth } from '../config/firebase';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { authAPI } from '../services/api';
+import HelpCenterModal from '../components/HelpCenterModal';
+import { getDeviceFingerprint } from '../utils/deviceFingerprint';
 
 const Login = () => {
     // default, password-login, register, forgot, otp
@@ -30,6 +32,8 @@ const Login = () => {
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [msg, setMsg] = useState({ type: '', text: '' });
+    const [otpCooldown, setOtpCooldown] = useState(0); // seconds left on resend cooldown
+    const [showHelpCenter, setShowHelpCenter] = useState(false);
     const navigate = useNavigate();
     
     const { 
@@ -40,6 +44,18 @@ const Login = () => {
         registerWithEmailPassword, 
         resetPassword 
     } = useAuth();
+
+    // OTP Cooldown timer effect
+    useEffect(() => {
+        if (otpCooldown <= 0) return;
+        const timer = setInterval(() => {
+            setOtpCooldown(prev => {
+                if (prev <= 1) { clearInterval(timer); return 0; }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [otpCooldown]);
 
     useEffect(() => {
         // Handle Email Link Sign-In Completion
@@ -53,9 +69,11 @@ const Login = () => {
             signInWithEmailLink(auth, emailForSignIn, window.location.href)
                 .then(async (result) => {
                     window.localStorage.removeItem('emailForSignIn');
+                    const deviceInfo = await getDeviceFingerprint().catch(() => null);
                     await authAPI.notifyLogin({ 
                         name: result.user.displayName, 
-                        email: result.user.email 
+                        email: result.user.email,
+                        deviceInfo
                     }).catch(err => console.error("Notification failed:", err));
                     navigate('/');
                 })
@@ -75,9 +93,11 @@ const Login = () => {
         else if (provider === 'facebook') result = await loginWithFacebook();
         
         if (result?.success) {
+            const deviceInfo = await getDeviceFingerprint().catch(() => null);
             await authAPI.notifyLogin({ 
                 name: result.user.displayName, 
-                email: result.user.email 
+                email: result.user.email,
+                deviceInfo
             }).catch(err => console.error("Notification failed:", err));
             navigate('/');
         } else {
@@ -116,6 +136,7 @@ const Login = () => {
                 const otpSent = await authAPI.sendOTP(email, 'login');
                 if (otpSent.data && otpSent.data.success) {
                     setMsg({ type: 'success', text: 'Identity confirmed. Please verify the 6-digit code sent to your email.' });
+                    setOtpCooldown(60); // Start 60s cooldown
                     setView('otp');
                 } else {
                     setMsg({ type: 'error', text: 'Failed to send security code. Please try again.' });
@@ -141,14 +162,20 @@ const Login = () => {
             const otpSent = await authAPI.sendOTP(email, 'register');
             if (otpSent.data && otpSent.data.success) {
                 setMsg({ type: 'success', text: 'Check your email for the verification code.' });
+                setOtpCooldown(60); // Start 60s cooldown
                 setView('otp');
             } else {
                 setMsg({ type: 'error', text: 'Registration verification failed. Please try again.' });
             }
         } catch (err) {
             console.error(err);
-            const errMsg = err.response?.data?.message || 'Server error while sending OTP. Check backend logs.';
-            setMsg({ type: 'error', text: errMsg });
+            if (err.response?.status === 429) {
+                setMsg({ type: 'error', text: '🛡️ Security Alert: Too many OTP attempts. Please wait 60 seconds before trying again.' });
+                setOtpCooldown(60);
+            } else {
+                const errMsg = err.response?.data?.message || 'Server error while sending OTP. Check backend logs.';
+                setMsg({ type: 'error', text: errMsg });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -183,7 +210,8 @@ const Login = () => {
                 } else {
                     // --- LOGIN FLOW ---
                     // 1. Finalize Login in Backend
-                    const loginFinalRes = await authAPI.loginVerify(email);
+                    const deviceInfo = await getDeviceFingerprint().catch(() => null);
+                    const loginFinalRes = await authAPI.loginVerify(email, deviceInfo);
                     
                     if (loginFinalRes.data && loginFinalRes.data.token) {
                         // 2. Store user data
@@ -475,6 +503,7 @@ const Login = () => {
                             <div className="text-center mb-4">
                                 <ShieldCheck className="mx-auto text-emerald-400 mb-2" size={40} />
                                 <p className="text-xs text-gray-500 uppercase tracking-[0.2em]">Secondary Verification</p>
+                                <p className="text-xs text-gray-600 mt-1">Code sent to <span className="text-emerald-400 font-bold">{email}</span></p>
                             </div>
                             <div className="relative">
                                 <input
@@ -496,8 +525,37 @@ const Login = () => {
                             >
                                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <span>Verify Security Code</span>}
                             </motion.button>
+                            
+                            {/* Resend OTP with Cooldown */}
                             <div className="text-center">
-                                <button type="button" onClick={() => switchView(name ? 'register' : 'password-login')} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors uppercase tracking-widest font-bold">Cancel Verification</button>
+                                <button
+                                    type="button"
+                                    disabled={otpCooldown > 0 || isLoading}
+                                    onClick={async () => {
+                                        setIsLoading(true);
+                                        try {
+                                            await authAPI.sendOTP(email, name ? 'register' : 'login');
+                                            setMsg({ type: 'success', text: 'New security code sent!' });
+                                            setOtpCooldown(60);
+                                        } catch (err) {
+                                            if (err.response?.status === 429) {
+                                                setMsg({ type: 'error', text: '🛡️ Security Alert: Too many OTP attempts. Please wait 60 seconds.' });
+                                                setOtpCooldown(60);
+                                            } else {
+                                                setMsg({ type: 'error', text: 'Failed to resend. Try again.' });
+                                            }
+                                        } finally { setIsLoading(false); }
+                                    }}
+                                    className={`text-xs font-bold uppercase tracking-widest transition-colors ${
+                                        otpCooldown > 0 ? 'text-gray-600 cursor-not-allowed' : 'text-cyan-400 hover:text-cyan-300 cursor-pointer'
+                                    }`}
+                                >
+                                    {otpCooldown > 0 ? `🔒 Resend in ${otpCooldown}s...` : '↻ Resend Code'}
+                                </button>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <button type="button" onClick={() => switchView(name ? 'register' : 'password-login')} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors uppercase tracking-widest font-bold">Cancel</button>
+                                <button type="button" onClick={() => setShowHelpCenter(true)} className="text-xs text-cyan-500 hover:text-cyan-300 transition-colors font-bold">Need Help? →</button>
                             </div>
                         </form>
                     )}
@@ -542,6 +600,11 @@ const Login = () => {
                     </p>
                 </div>
             </motion.div>
+
+            {/* Help Center Modal - accessible from OTP view */}
+            {showHelpCenter && (
+                <HelpCenterModal onClose={() => setShowHelpCenter(false)} guestEmail={email} />
+            )}
         </div>
     );
 };
