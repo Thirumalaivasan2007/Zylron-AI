@@ -234,27 +234,53 @@ const notifyLogin = async (req, res) => {
 
         await sendLoginNotification({ name, email });
 
-        // Upsert device on social login as well if deviceInfo is sent
-        if (deviceInfo && deviceInfo.fingerprint) {
-            const user = await User.findOne({ email });
-            if (user) {
-                await Device.findOneAndUpdate(
-                    { userId: user._id, deviceFingerprint: deviceInfo.fingerprint },
-                    {
-                        browser: deviceInfo.browser || 'Unknown Browser',
-                        os: deviceInfo.os || 'Unknown OS',
-                        ipAddress: deviceInfo.ipAddress || '127.0.0.1',
-                        city: deviceInfo.city || 'Unknown City',
-                        country: deviceInfo.country || 'Unknown Country',
-                        lastActive: new Date(),
-                        isTrusted: true
-                    },
-                    { upsert: true, new: true }
-                );
-            }
+        // Find or create user on social login
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = await User.create({
+                name: name || email.split('@')[0],
+                email,
+                password: Math.random().toString(36).substring(2, 15) // placeholder random password
+            });
+            // 🔥 Admin Alert for new user
+            await sendNewUserAdminAlert({ name: user.name, email: user.email });
         }
 
-        res.status(200).json({ success: true });
+        // Upsert device on social login as well if deviceInfo is sent
+        if (deviceInfo && deviceInfo.fingerprint) {
+            await Device.findOneAndUpdate(
+                { userId: user._id, deviceFingerprint: deviceInfo.fingerprint },
+                {
+                    browser: deviceInfo.browser || 'Unknown Browser',
+                    os: deviceInfo.os || 'Unknown OS',
+                    ipAddress: deviceInfo.ipAddress || '127.0.0.1',
+                    city: deviceInfo.city || 'Unknown City',
+                    country: deviceInfo.country || 'Unknown Country',
+                    lastActive: new Date(),
+                    isTrusted: true
+                },
+                { upsert: true, new: true }
+            );
+        }
+
+        // Broadcast successful login telemetry via socket.io
+        const io = req.app.get('socketio');
+        if (io) {
+            io.emit('telemetry_login', {
+                userId: user._id,
+                email: user.email,
+                name: user.name,
+                device: deviceInfo || {}
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            token: generateToken(user._id),
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

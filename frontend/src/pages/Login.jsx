@@ -70,11 +70,18 @@ const Login = () => {
                 .then(async (result) => {
                     window.localStorage.removeItem('emailForSignIn');
                     const deviceInfo = await getDeviceFingerprint().catch(() => null);
-                    await authAPI.notifyLogin({ 
-                        name: result.user.displayName, 
-                        email: result.user.email,
-                        deviceInfo
-                    }).catch(err => console.error("Notification failed:", err));
+                    try {
+                        const notifyRes = await authAPI.notifyLogin({ 
+                            name: result.user.displayName, 
+                            email: result.user.email,
+                            deviceInfo
+                        });
+                        if (notifyRes.data && notifyRes.data.token) {
+                            localStorage.setItem('user', JSON.stringify(notifyRes.data));
+                        }
+                    } catch (err) {
+                        console.error("Notification failed:", err);
+                    }
                     navigate('/');
                 })
                 .catch((error) => {
@@ -94,11 +101,18 @@ const Login = () => {
         
         if (result?.success) {
             const deviceInfo = await getDeviceFingerprint().catch(() => null);
-            await authAPI.notifyLogin({ 
-                name: result.user.displayName, 
-                email: result.user.email,
-                deviceInfo
-            }).catch(err => console.error("Notification failed:", err));
+            try {
+                const notifyRes = await authAPI.notifyLogin({ 
+                    name: result.user.displayName, 
+                    email: result.user.email,
+                    deviceInfo
+                });
+                if (notifyRes.data && notifyRes.data.token) {
+                    localStorage.setItem('user', JSON.stringify(notifyRes.data));
+                }
+            } catch (err) {
+                console.error("Notification failed:", err);
+            }
             navigate('/');
         } else {
             setMsg({ type: 'error', text: result?.message || 'Authentication failed' });
