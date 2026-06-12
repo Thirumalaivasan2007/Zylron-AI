@@ -590,22 +590,23 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
 
         // 🚀 SMART FALLBACK: If no "File:" labels exist, auto-scaffold standard blocks
         if (savedFiles.length === 0) {
-            const htmlBlocks = aiText.match(/```html\n([\s\S]*?)\n```/g);
-            const cssBlocks = aiText.match(/```css\n([\s\S]*?)\n```/g);
-            const jsBlocks = aiText.match(/```(?:javascript|js)\n([\s\S]*?)\n```/g);
+            const htmlBlocks = aiText.match(/```(?:html|markup)\s*\n([\s\S]*?)\n```/ig);
+            const cssBlocks = aiText.match(/```(?:css|style)\s*\n([\s\S]*?)\n```/ig);
+            const jsBlocks = aiText.match(/```(?:javascript|js|jsx)\s*\n([\s\S]*?)\n```/ig);
 
             if (htmlBlocks) {
-                const content = htmlBlocks[0].replace(/```html\n/, "").replace(/\n```/, "");
+                const content = htmlBlocks[0].replace(/```(?:html|markup)\s*\n/i, "").replace(/\n```/, "");
+                const content = htmlBlocks[0].replace(/```(?:html|markup)\s*\n/i, "").replace(/\n```/i, "");
                 await toolHandlers.writeFile({ filename: 'index.html', content });
                 previewUrl = `${BASE_URL}/workspace/index.html?t=${Date.now()}`;
                 agentUsed = true;
             }
             if (cssBlocks) {
-                const content = cssBlocks[0].replace(/```css\n/, "").replace(/\n```/, "");
+                const content = cssBlocks[0].replace(/```(?:css|style)\s*\n/i, "").replace(/\n```/i, "");
                 await toolHandlers.writeFile({ filename: 'style.css', content });
             }
             if (jsBlocks) {
-                const content = jsBlocks[0].replace(/```(?:javascript|js)\n/, "").replace(/\n```/, "");
+                const content = jsBlocks[0].replace(/```(?:javascript|js|jsx)\s*\n/i, "").replace(/\n```/i, "");
                 await toolHandlers.writeFile({ filename: 'script.js', content });
             }
         } else if (savedFiles.includes('index.html')) {
