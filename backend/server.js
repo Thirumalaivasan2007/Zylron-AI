@@ -39,7 +39,31 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Handle preflight
+
+// Security Hardening Middleware
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+app.use(mongoSanitize());
 app.use(express.json());
+
+// Pre-login Authentication Rate Limiting
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
+  message: { message: 'Security Alert: Too many auth attempts. Please wait 60 seconds.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth/send-otp', authLimiter);
+app.use('/api/auth/verify-otp', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/login-verify', authLimiter);
 
 // 🦾 AGENT WORKSPACE STATIC SERVER (Neural Sandbox)
 app.use('/workspace', (req, res, next) => {
