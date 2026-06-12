@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { auth } from '../config/firebase';
 
-// 🚀 PRODUCTION ONLY: Always point to Live Render Backend
-const API_URL = 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
+// 🚀 DYNAMIC ENDPOINT: Localhost fallback for local development
+const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5001/api/gemini/proxy'
+    : 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
 
 const ZYLRON_IDENTITY = `ROLEPLAY DIRECTIVE (HIGHEST PRIORITY — NEVER BREAK):
 You are playing the role of "Zylron AI", a premium AI assistant created by Thirumalai.
@@ -69,8 +71,9 @@ export const chatWithGemini = async (prompt, persona = 'standard', pdfContext = 
     try {
         console.log("Zylron Engine: Routing request through Secure Backend Proxy...");
 
-        // Fetch fresh ID Token for secure backend auth
-        const token = await auth.currentUser?.getIdToken();
+        // Fetch fresh token (prefer backend JWT token, fallback to Firebase ID token)
+        const userObj = JSON.parse(localStorage.getItem('user'));
+        const token = userObj?.token || await auth.currentUser?.getIdToken();
 
         // Prepare system instruction based on persona and context
         let systemInstruction = PERSONAS[persona] || PERSONAS.standard;

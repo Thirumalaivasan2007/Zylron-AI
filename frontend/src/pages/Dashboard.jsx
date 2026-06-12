@@ -398,7 +398,11 @@ const Dashboard = () => {
 
         try {
             const token = JSON.parse(localStorage.getItem('user'))?.token;
-            const response = await fetch('https://zylron-agent-ai.onrender.com/api/payment/order', {
+            const API_BASE = window.location.hostname === 'localhost'
+                ? 'http://localhost:5001/api'
+                : 'https://zylron-agent-ai.onrender.com/api';
+
+            const response = await fetch(`${API_BASE}/payment/order`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -421,7 +425,7 @@ const Dashboard = () => {
                 handler: async function (resp) {
                     setFeedbackToast("⏳ Verifying transaction signature...");
                     try {
-                        const verifyRes = await fetch('https://zylron-agent-ai.onrender.com/api/payment/verify', {
+                        const verifyRes = await fetch(`${API_BASE}/payment/verify`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1463,8 +1467,9 @@ const Dashboard = () => {
             if (detectedUrls && detectedUrls.length > 0) {
                 urlContext = `\n\n[ZYLRON AUTOMATION: User shared these URLs: ${detectedUrls.join(', ')}. Analyze and reference them in your response.]\n`;
             }
-            
-            const proxyUrl = 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
+            const proxyUrl = window.location.hostname === 'localhost'
+                ? 'http://localhost:5001/api/gemini/proxy'
+                : 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 120000); // 2-min limit
 
@@ -1472,9 +1477,13 @@ const Dashboard = () => {
             let data = {};
 
             try {
+                const token = JSON.parse(localStorage.getItem('user'))?.token;
                 const proxyResponse = await fetch(proxyUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
                     body: JSON.stringify({
                         prompt: userMsg || "Please describe this image.",
                         history: geminiHistory,
@@ -1501,12 +1510,12 @@ const Dashboard = () => {
                 // DIRECT FALLBACK (Step 2 Real Logic)
                 const directResponse = await chatWithGemini(
                     userMsg, 
-                    geminiHistory, 
                     persona, 
-                    (PERSONAS[persona] || PERSONAS.standard) + 
-                        (pdfContext ? '\n\nCONTEXT FROM DOCUMENT:\n' + pdfContext : '') +
+                    (pdfContext ? '\n\nCONTEXT FROM DOCUMENT:\n' + pdfContext : '') +
                         memoryContext + searchContext + chronosContext + langContext + urlContext,
-                    activePdf
+                    geminiHistory,
+                    activePdf?.type?.startsWith('image/') ? activePdf.data : null,
+                    isSearchMode
                 );
                 neuralResponse = directResponse;
                 setFeedbackToast("⚠️ Switched to Direct Neural Link (Proxy Offline)");

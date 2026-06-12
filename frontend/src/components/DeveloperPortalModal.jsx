@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Code, Copy, Check, Shield, Zap, AlertTriangle, Key } from 'lucide-react';
 import axios from 'axios';
 
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:5001/api'
+  : 'https://zylron-agent-ai.onrender.com/api';
+
 const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
   const [apiKeys, setApiKeys] = useState([]);
   const [keyName, setKeyName] = useState('');
@@ -13,7 +17,7 @@ const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
   const fetchKeys = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.get('https://zylron-agent-ai.onrender.com/api/auth/api-keys', {
+      const response = await axios.get(`${API_BASE}/auth/api-keys`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setApiKeys(response.data);
@@ -36,7 +40,7 @@ const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
     setApiError(null);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.post('https://zylron-agent-ai.onrender.com/api/auth/api-keys', 
+      const response = await axios.post(`${API_BASE}/auth/api-keys`, 
         { name: keyName || 'Production Key' },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -54,7 +58,7 @@ const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
     if (!confirm("Are you sure you want to revoke this API key? All applications using this key will immediately lose access.")) return;
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.delete(`https://zylron-agent-ai.onrender.com/api/auth/api-keys/${id}`, {
+      const response = await axios.delete(`${API_BASE}/auth/api-keys/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setApiKeys(prev => prev.map(k => k._id === id ? { ...k, status: 'revoked' } : k));
@@ -232,7 +236,7 @@ const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
             </p>
             <div className="relative group bg-black/60 p-4 rounded-xl border border-white/5 font-mono text-[11px] text-emerald-400 select-all overflow-x-auto">
               <span className="block whitespace-pre">
-{`curl -X POST https://zylron-agent-ai.onrender.com/api/v1/agent/chat \\
+{`curl -X POST ${window.location.hostname === 'localhost' ? 'http://localhost:5001' : 'https://zylron-agent-ai.onrender.com'}/api/v1/agent/chat \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: YOUR_API_KEY_HERE" \\
   -d '{"prompt": "Generate a quick python binary search function"}'`}
