@@ -595,7 +595,6 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
             const jsBlocks = aiText.match(/```(?:javascript|js|jsx)\s*\n([\s\S]*?)\n```/ig);
 
             if (htmlBlocks) {
-                const content = htmlBlocks[0].replace(/```(?:html|markup)\s*\n/i, "").replace(/\n```/, "");
                 const content = htmlBlocks[0].replace(/```(?:html|markup)\s*\n/i, "").replace(/\n```/i, "");
                 await toolHandlers.writeFile({ filename: 'index.html', content });
                 previewUrl = `${BASE_URL}/workspace/index.html?t=${Date.now()}`;
