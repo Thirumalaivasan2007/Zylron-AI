@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Log = require('../models/Log');
+const CrashLog = require('../models/CrashLog');
 const { sendMailViaProxy } = require('../utils/emailService');
 
 // @desc    Get system statistics
@@ -202,6 +203,31 @@ const toggleApiKeyStatus = async (req, res) => {
     }
 };
 
+// @desc    Get all crash logs (Auto-DevOps feed)
+// @route   GET /api/admin/crash-logs
+// @access  Private/Admin
+const getCrashLogs = async (req, res) => {
+    try {
+        const logs = await CrashLog.find({}).sort({ createdAt: -1 }).limit(50);
+        res.json(logs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get OS-Level Recall timeline for a user
+// @route   GET /api/admin/users/:id/recall
+// @access  Private/Admin
+const getUserRecall = async (req, res) => {
+    try {
+        const RecallEvent = require('../models/RecallEvent');
+        const events = await RecallEvent.find({ userId: req.params.id }).sort({ createdAt: -1 }).limit(200);
+        res.json(events);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getStats,
     getUsers,
@@ -209,5 +235,7 @@ module.exports = {
     toggleBanUser,
     broadcastMessage,
     getUserAnalytics,
-    toggleApiKeyStatus
+    toggleApiKeyStatus,
+    getCrashLogs,
+    getUserRecall
 };

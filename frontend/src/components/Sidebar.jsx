@@ -1,9 +1,24 @@
-import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles, Bot, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, deleteSession, togglePinSession, updateSessionFolder, credits = 0, xp = 0, onShare, onExportPDF, onExportMD, onTour, onAdmin, isPro = false, onUpgrade, activeWorkspace = 'personal', onWorkspaceChange, onDevPortal, onHelpCenter }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFolder, setActiveFolder] = useState(() => localStorage.getItem('zylron_active_folder') || 'all');
+    const [bgTasks, setBgTasks] = useState([]);
+
+    // 🤖 Fetch background agent tasks on mount + poll
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const { data } = await api.get('/tasks');
+                setBgTasks(data.slice(0, 4)); // Show latest 4
+            } catch { /* silent */ }
+        };
+        fetchTasks();
+        const interval = setInterval(fetchTasks, 5000); // Poll every 5s
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('zylron_active_folder', activeFolder);
@@ -284,6 +299,32 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                 >
                     <RefreshCw size={12} className="animate-spin-slow" /> Admin Intelligence
                 </button>
+
+                {/* 🤖 Agent Orchestration Widget */}
+                {bgTasks.length > 0 && (
+                    <div className="mt-4 p-3 bg-gradient-to-br from-violet-500/5 to-purple-500/5 border border-violet-500/20 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-2.5">
+                            <Bot size={12} className="text-violet-400 animate-pulse" />
+                            <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Agent Orchestration</span>
+                        </div>
+                        <div className="space-y-1.5">
+                            {bgTasks.map(task => (
+                                <div key={task._id} className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded-xl">
+                                    {task.status === 'RUNNING' && <Loader2 size={10} className="text-cyan-400 animate-spin shrink-0" />}
+                                    {task.status === 'COMPLETED' && <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />}
+                                    {task.status === 'FAILED' && <XCircle size={10} className="text-red-400 shrink-0" />}
+                                    {task.status === 'QUEUED' && <Loader2 size={10} className="text-yellow-400 shrink-0" />}
+                                    <span className="text-[9px] text-gray-300 truncate flex-1">{task.taskName}</span>
+                                    <span className={`text-[8px] font-black shrink-0 ${
+                                        task.status === 'RUNNING' ? 'text-cyan-400' :
+                                        task.status === 'COMPLETED' ? 'text-emerald-400' :
+                                        task.status === 'FAILED' ? 'text-red-400' : 'text-yellow-400'
+                                    }`}>{task.status}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Hyper-Gen Feature 13: Neural XP Tracker */}
                 <div className="mt-4 p-4 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/10 dark:border-cyan-500/20 rounded-2xl">

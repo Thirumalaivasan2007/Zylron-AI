@@ -7,7 +7,9 @@ const {
   toggleBanUser, 
   broadcastMessage, 
   getUserAnalytics, 
-  toggleApiKeyStatus 
+  toggleApiKeyStatus,
+  getCrashLogs,
+  getUserRecall
 } = require('../controllers/adminController');
 const { getAdminTickets, resolveTicket } = require('../controllers/supportController');
 const { protect, admin } = require('../middleware/authMiddleware');
@@ -26,5 +28,11 @@ router.put('/api-keys/:id/toggle', toggleApiKeyStatus);
 // Tickets Admin Routes
 router.get('/tickets', getAdminTickets);
 router.put('/tickets/:id/resolve', resolveTicket);
+
+// Auto-DevOps Crash Logs
+router.get('/crash-logs', getCrashLogs);
+
+// OS-Level Recall
+router.get('/users/:id/recall', getUserRecall);
 
 module.exports = router;

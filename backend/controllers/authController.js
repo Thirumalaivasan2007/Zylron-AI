@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
-const { sendOTPEmail, sendNewUserAdminAlert, sendLoginNotification } = require('../utils/emailService');
+const { sendOTPEmail, sendNewUserAdminAlert, sendLoginNotification, sendMailViaProxy } = require('../utils/emailService');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -18,7 +18,7 @@ const sendOTP = async (req, res) => {
         const { email, type } = req.body;
         if (!email) return res.status(400).json({ message: 'Email is required' });
 
-        // Ultimate Logic: Check if user already exists
+        // Check if user already exists
         const userExists = await User.findOne({ email });
 
         if (type === 'register' && userExists) {
@@ -59,7 +59,6 @@ const verifyOTP = async (req, res) => {
         const otpRecord = await Otp.findOne({ email, otp });
 
         if (otpRecord) {
-            // Success - delete OTP record after verification
             await Otp.deleteOne({ _id: otpRecord._id });
             res.status(200).json({ success: true });
         } else {
@@ -82,14 +81,18 @@ const registerUser = async (req, res) => {
 
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'Identity already registered. Please login instead.' });
         }
 
         const user = await User.create({ name, email, password });
 
         if (user) {
-            // 🔥 Admin Alert: New User Registered
+            // 🔥 Admin Alert
             await sendNewUserAdminAlert({ name, email });
+
+            // 🎯 Drip Automation Trigger 1: Welcome Email (fire-and-forget)
+            const welcomeHtml = `<div style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:40px;border-radius:16px;max-width:600px;margin:0 auto"><h1 style="color:#06b6d4;font-size:24px">⚡ Welcome to Zylron AI, ${name}! 🚀</h1><p style="color:#94a3b8;line-height:1.7">Your neural node is now active. You have been granted <strong style="color:#06b6d4">50 free intelligence credits</strong> per day.</p><ul style="color:#e2e8f0;line-height:2"><li>Chat with the Zylron AI Agent</li><li>Upload PDFs & analyze documents</li><li>Generate & preview code instantly</li><li>Use the Developer API</li></ul><p style="color:#64748b;font-size:12px;margin-top:30px">Zylron Neural Platform · Drip Engine v1.0</p></div>`;
+            sendMailViaProxy(email, '⚡ Welcome to Zylron AI — Your Neural Node is Active!', welcomeHtml, 'Zylron AI').catch(() => {});
 
             res.status(201).json({
                 _id: user.id,
@@ -114,12 +117,11 @@ const loginUser = async (req, res) => {
 
         if (user && (await user.matchPassword(password))) {
             // Password Correct! But don't give token yet.
-            // Notify admin about the attempt
             sendLoginNotification({ name: user.name, email: user.email });
 
             res.json({
                 success: true,
-                requires2FA: true, // Tell frontend to start OTP flow
+                requires2FA: true,
                 message: 'Identity confirmed. Please verify your OTP to proceed.'
             });
         } else {

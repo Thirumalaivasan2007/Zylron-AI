@@ -1,6 +1,9 @@
 
 // 🚀 ZYLRON AI PRO — PRODUCTION VERSION 3.0.0
 require('dotenv').config();
+const setupAutoHealer = require('./utils/autoHealer');
+setupAutoHealer();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -101,10 +104,36 @@ app.use('/api/actions', require('./routes/actionRoutes'));
 app.use('/api/v1', require('./routes/publicApiRoutes'));
 app.use('/api/support', require('./routes/supportRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/recall', require('./routes/recallRoutes'));       // 🧠 OS-Level Recall Telemetry
+app.use('/api/tasks', require('./routes/taskRoutes'));          // 🤖 Agent Orchestration
+app.use('/api/flags', require('./routes/featureFlagRoutes'));   // 🎛️ Remote Feature Flags
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Connected: ' + mongoose.connection.host))
+  .then(async () => {
+    console.log('MongoDB Connected: ' + mongoose.connection.host);
+    
+    // 🧠 Oracle Engine: Seed default feature flags if none exist
+    const FeatureFlag = require('./models/FeatureFlag');
+    const existing = await FeatureFlag.countDocuments();
+    if (existing === 0) {
+      await FeatureFlag.insertMany([
+        { key: 'zylron_sense', label: 'Zylron Sense (Hand Gestures)', description: 'Webcam gesture control', enabled: true },
+        { key: 'file_upload', label: 'File Upload & PDF Intelligence', description: 'Allow users to upload files', enabled: true },
+        { key: 'b2b_api', label: 'B2B Developer API', description: 'External API key provisioning', enabled: true },
+        { key: 'voice_mode', label: 'Neural Voice Interface (STT/TTS)', description: 'Speech recognition & synthesis', enabled: true },
+        { key: 'agent_tasks', label: 'Agent Orchestration (Background Tasks)', description: 'Background AI task runner', enabled: true },
+        { key: 'recall_telemetry', label: 'OS-Level Recall Telemetry', description: 'Track user behavior for God\'s Eye', enabled: true },
+      ]);
+      console.log('🎛️  Feature Flags seeded with defaults.');
+    }
+
+    // 🧠 Oracle Engine: Run churn prediction every 24 hours
+    const runChurnPrediction = require('./utils/oracleEngine');
+    runChurnPrediction(); // Run once on startup
+    setInterval(runChurnPrediction, 24 * 60 * 60 * 1000);
+    console.log('🧠 Oracle Churn Engine: Scheduled (every 24h).');
+  })
   .catch(err => console.log('MongoDB Error:', err));
 
 // Diagnostic Model Discovery
