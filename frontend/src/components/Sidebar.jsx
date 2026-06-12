@@ -16,7 +16,7 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
             } catch { /* silent */ }
         };
         fetchTasks();
-        const interval = setInterval(fetchTasks, 5000); // Poll every 5s
+        const interval = setInterval(fetchTasks, 60000); // Poll every 60s instead of 5s
         return () => clearInterval(interval);
     }, []);
 
