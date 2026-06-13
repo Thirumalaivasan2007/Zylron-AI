@@ -11,7 +11,9 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
     useEffect(() => {
         const fetchSpotifyStatus = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const userRaw = localStorage.getItem('user');
+                if (!userRaw) return;
+                const token = JSON.parse(userRaw).token;
                 if (!token) return;
                 const BASE_URL = process.env.NODE_ENV === 'production' 
                     ? 'https://zylron-agent-ai.onrender.com' 
@@ -200,7 +202,9 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
                                     onClick={async () => {
                                         if (spotifyConnected) return;
                                         try {
-                                            const token = localStorage.getItem('token');
+                                            const userRaw = localStorage.getItem('user');
+                                            if (!userRaw) return alert('Please login first');
+                                            const token = JSON.parse(userRaw).token;
                                             if (!token) return alert('Please login first');
                                             const BASE_URL = process.env.NODE_ENV === 'production' ? 'https://zylron-agent-ai.onrender.com' : 'http://localhost:5001';
                                             const res = await fetch(`${BASE_URL}/api/spotify/login`, {
