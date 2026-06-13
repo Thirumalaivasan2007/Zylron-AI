@@ -109,9 +109,9 @@ const toolHandlers = {
         } catch (error) { return `Search failed: ${error.message}`; }
     },
 
-    spotifyAction: async ({ action, query }) => {
+    spotifyAction: async ({ action, query }, user) => {
         try {
-            const res = await spotifyAction(action, query);
+            const res = await spotifyAction(action, query, user);
             return res.message;
         } catch (error) { return `Spotify failed: ${error.message}`; }
     },

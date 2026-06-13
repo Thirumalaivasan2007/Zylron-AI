@@ -29,6 +29,14 @@ const userSchema = mongoose.Schema(
             type: String,
             enum: ['free', 'pro'],
             default: 'free'
+        },
+        spotifyRefreshToken: {
+            type: String,
+            default: null
+        },
+        spotifyConnected: {
+            type: Boolean,
+            default: false
         }
     },
     {

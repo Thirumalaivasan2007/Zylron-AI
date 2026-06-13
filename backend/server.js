@@ -133,6 +133,7 @@ app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/recall', require('./routes/recallRoutes'));       // 🧠 OS-Level Recall Telemetry
 app.use('/api/tasks', require('./routes/taskRoutes'));          // 🤖 Agent Orchestration
 app.use('/api/flags', require('./routes/featureFlagRoutes'));   // 🎛️ Remote Feature Flags
+app.use('/api/spotify', require('./routes/spotifyRoutes'));     // 🎵 Spotify Multi-User OAuth
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)

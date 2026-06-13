@@ -522,7 +522,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 let apiResponse = null;
                 const handler = toolHandlers[fc.name];
                 if (handler) {
-                    apiResponse = await handler(fc.args);
+                    apiResponse = await handler(fc.args, req.user);
                 } else {
                     apiResponse = "Tool not recognized.";
                 }

@@ -1,22 +1,24 @@
 const axios = require('axios');
 
 /**
- * Helper to get a fresh Spotify access token using the refresh token
+ * Helper to get a fresh Spotify access token using the user's refresh token
  */
-const getSpotifyAccessToken = async () => {
+const getSpotifyAccessToken = async (refreshToken) => {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-    const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN;
 
-    if (!clientId || !clientSecret || !refreshToken) {
-        return process.env.SPOTIFY_ACCESS_TOKEN || null;
+    // Fallback to global env token for local dev if needed, else fail
+    const tokenToUse = refreshToken || process.env.SPOTIFY_REFRESH_TOKEN;
+
+    if (!clientId || !clientSecret || !tokenToUse) {
+        return null;
     }
 
     try {
         const response = await axios.post('https://accounts.spotify.com/api/token', 
             new URLSearchParams({
                 grant_type: 'refresh_token',
-                refresh_token: refreshToken
+                refresh_token: tokenToUse
             }).toString(),
             {
                 headers: {
@@ -36,12 +38,13 @@ const getSpotifyAccessToken = async () => {
  * Zylron Spotify Orchestration Service
  * Control your music environment via AI commands
  */
-const spotifyAction = async (action, query = '') => {
-    const accessToken = await getSpotifyAccessToken();
+const spotifyAction = async (action, query = '', user = null) => {
+    const refreshToken = user ? user.spotifyRefreshToken : null;
+    const accessToken = await getSpotifyAccessToken(refreshToken);
     
     if (!accessToken) {
-        console.warn('⚠️ Spotify Access Token missing. Action restricted.');
-        return { success: false, message: 'Spotify not linked. Please authorize in Admin Panel.' };
+        console.warn('⚠️ Spotify Access Token missing for user.');
+        return { success: false, message: 'Spotify not linked. Please connect your Spotify account in the dashboard.' };
     }
 
     const headers = {
