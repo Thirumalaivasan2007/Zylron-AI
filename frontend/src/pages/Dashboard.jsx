@@ -147,7 +147,7 @@ const SlideDeck = ({ slides }) => {
     );
 };
 
-const TypewriterMarkdown = ({ text, animate }) => {
+const TypewriterMarkdown = ({ text, animate, onPreviewHtml }) => {
     const [displayedText, setDisplayedText] = useState(animate ? '' : text);
 
     useEffect(() => {
@@ -206,12 +206,22 @@ const TypewriterMarkdown = ({ text, animate }) => {
                         <div className="relative group/code my-4 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
                             <div className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{match[1]}</span>
-                                <button 
-                                    onClick={() => navigator.clipboard.writeText(content)}
-                                    className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-cyan-400 hover:opacity-70 transition-opacity"
-                                >
-                                    Copy
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    {(match[1] === 'html' || match[1] === 'xml') && onPreviewHtml && (
+                                        <button 
+                                            onClick={() => onPreviewHtml(content)}
+                                            className="text-[10px] flex items-center gap-1 font-bold uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
+                                        >
+                                            <Monitor size={12} /> Preview UI
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => navigator.clipboard.writeText(content)}
+                                        className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-cyan-400 hover:opacity-70 transition-opacity"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
                             </div>
                             <SyntaxHighlighter
                                 {...props}
@@ -2498,7 +2508,14 @@ const Dashboard = () => {
                                                                     </div>
                                                                 )}
                                                                 <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed prose-p:leading-relaxed prose-a:text-emerald-600 dark:prose-a:text-cyan-400 drop-shadow-none dark:drop-shadow-sm">
-                                                                    <TypewriterMarkdown text={msg.content} animate={msg.animate} />
+                                                                    <TypewriterMarkdown 
+                                                                        text={msg.content} 
+                                                                        animate={msg.animate} 
+                                                                        onPreviewHtml={(code) => {
+                                                                            setPreviewCode(code);
+                                                                            setIsCodeModalOpen(true);
+                                                                        }} 
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         )}
