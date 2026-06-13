@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld('zylronDesktop', {
     // Get latest Omni-Vision screenshot (base64)
     getScreenContext: () => ipcRenderer.invoke('get-screen-context'),
     
+    // 🎵 OS MEDIA: Bypass Spotify API
+    osMediaControl: (action) => ipcRenderer.invoke('os-media-control', action),
+    
     // Check if running in desktop mode
     isDesktop: true,
     

@@ -1504,6 +1504,12 @@ const Dashboard = () => {
                 clearTimeout(timeoutId);
                 if (!proxyResponse.ok) throw new Error(data.error || "Neural Proxy Error");
                 neuralResponse = data.text;
+                
+                // 🎵 OS MEDIA BYPASS: Trigger Desktop API if instructed
+                if (data.osMediaAction && window.electronAPI) {
+                    console.log('🤖 Zylron Fallback: Triggering OS Media Key ->', data.osMediaAction);
+                    window.electronAPI.osMediaControl(data.osMediaAction);
+                }
             } catch (proxyError) {
                 clearTimeout(timeoutId);
                 console.warn("Neural Proxy failed, trying direct link...", proxyError);

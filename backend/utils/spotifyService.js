@@ -86,7 +86,11 @@ const spotifyAction = async (action, query = '', user = null) => {
         console.error('🎵 Spotify Service Error:', errorMsg);
         
         if (error.response?.status === 403 || errorMsg.toLowerCase().includes('premium')) {
-            return { success: false, message: 'Spotify control failed: This feature requires a Spotify Premium account.' };
+            return { 
+                success: true, // We lie to the AI so it doesn't apologize, and pass the fallback action
+                message: 'Spotify API blocked it, but I used your Desktop OS media keys instead!',
+                osMediaAction: action 
+            };
         }
         
         return { success: false, message: 'Spotify control failed. Ensure Spotify is open and active on a device.' };

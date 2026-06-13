@@ -3,6 +3,7 @@ const { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, nativeImage, sh
 const path = require('path');
 const screenshot = require('screenshot-desktop');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 // ─── CONFIG ────────────────────────────────────────────
 // ─── CONFIG ────────────────────────────────────────────
@@ -303,6 +304,26 @@ function toggleOmniVision() {
 // ─── IPC: Send screenshot to renderer ──────────────────
 ipcMain.handle('get-screen-context', () => {
     return latestScreenshotBase64;
+});
+
+// ─── OS MEDIA CONTROLS (Bypass Spotify API) ─────────────
+ipcMain.handle('os-media-control', async (event, action) => {
+    if (process.platform === 'win32') {
+        let keyCode = '';
+        if (action === 'playpause' || action === 'play' || action === 'pause') keyCode = '179';
+        else if (action === 'next') keyCode = '176';
+        else if (action === 'prev') keyCode = '177';
+        
+        if (keyCode) {
+            const cmd = `powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys([char]${keyCode})"`;
+            exec(cmd, (err) => {
+                if (err) console.error('Media Key Error:', err);
+            });
+            console.log(`🎵 OS Media Key Executed: ${action} (${keyCode})`);
+            return { success: true, message: `Executed OS Media Key: ${action}` };
+        }
+    }
+    return { success: false, message: 'OS Media controls only supported on Windows Desktop App.' };
 });
 
 // ─── APP LIFECYCLE ──────────────────────────────────────

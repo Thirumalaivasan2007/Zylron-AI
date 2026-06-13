@@ -520,9 +520,23 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 console.log(`🤖 Zylron Swarm Mode executing tool: ${fc.name} with args:`, fc.args);
                 
                 let apiResponse = null;
-                const handler = toolHandlers[fc.name];
-                if (handler) {
-                    apiResponse = await handler(fc.args, req.user);
+                if (toolHandlers[fc.name]) {
+                    const result = await toolHandlers[fc.name](fc.args, req.user);
+                    
+                    // 🎵 OS MEDIA BYPASS: If Spotify API fails, tell Desktop App to use Media Keys
+                    if (result.osMediaAction) {
+                        return res.json({ 
+                            text: result.message, 
+                            agentUsed: true, 
+                            osMediaAction: result.osMediaAction 
+                        });
+                    }
+
+                    // For search Web and Browse Web
+                    if (result.url) {
+                        previewUrl = result.url;
+                    }
+                    apiResponse = result;
                 } else {
                     apiResponse = "Tool not recognized.";
                 }
