@@ -2557,7 +2557,7 @@ const Dashboard = () => {
                                                                 </div>
 
                                                                 {/* 🚀 ACTION CLUSTER (Clean Dedicated Row) */}
-                                                                {(msg.previewUrl || (msg.content && msg.content.includes('```html'))) && (
+                                                                {(msg.previewUrl || (msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')))) && (
                                                                     <div className="flex gap-3 mt-1 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full">
                                                                         {msg.previewUrl && (
                                                                             <button 
@@ -2569,14 +2569,22 @@ const Dashboard = () => {
                                                                             </button>
                                                                         )}
                                                                         
-                                                                        {msg.content && msg.content.includes('```html') && (
+                                                                        {msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')) && (
                                                                             <button 
                                                                                 type="button" 
                                                                                 onClick={() => {
-                                                                                    // Extract HTML from the first markdown block
-                                                                                    const match = msg.content.match(/```html\n([\s\S]*?)```/);
-                                                                                    if (match && match[1]) {
-                                                                                        setPreviewCode(match[1]);
+                                                                                    // Extract HTML from markdown block or raw HTML
+                                                                                    const mdMatch = msg.content.match(/```(?:html|HTML)?\n([\s\S]*?)```/);
+                                                                                    const htmlMatch = msg.content.match(/(<!DOCTYPE html>[\s\S]*?<\/html>)/i) || msg.content.match(/(<html[\s\S]*?<\/html>)/i);
+                                                                                    
+                                                                                    if (mdMatch && mdMatch[1]) {
+                                                                                        setPreviewCode(mdMatch[1]);
+                                                                                        setIsCodeModalOpen(true);
+                                                                                    } else if (htmlMatch && htmlMatch[1]) {
+                                                                                        setPreviewCode(htmlMatch[1]);
+                                                                                        setIsCodeModalOpen(true);
+                                                                                    } else {
+                                                                                        setPreviewCode(msg.content);
                                                                                         setIsCodeModalOpen(true);
                                                                                     }
                                                                                 }} 
