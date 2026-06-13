@@ -5,6 +5,28 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
     const [notifications, setNotifications] = useState(true);
     const [securityMode, setSecurityMode] = useState(true);
     const [temperature, setTemperature] = useState(0.7);
+    const [spotifyConnected, setSpotifyConnected] = useState(false);
+
+    // Fetch Spotify Status
+    useEffect(() => {
+        const fetchSpotifyStatus = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const BASE_URL = process.env.NODE_ENV === 'production' 
+                    ? 'https://zylron-agent-ai.onrender.com' 
+                    : 'http://localhost:5001';
+                const res = await fetch(`${BASE_URL}/api/spotify/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                setSpotifyConnected(data.connected);
+            } catch (e) {
+                console.error('Failed to fetch Spotify status:', e);
+            }
+        };
+        if (isOpen) fetchSpotifyStatus();
+    }, [isOpen]);
 
     // Keyboard Accessibility
     useEffect(() => {
@@ -159,6 +181,51 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
                             </div>
                             <div className="w-10 h-5 bg-gray-200 dark:bg-gray-700 rounded-full relative p-1 transition-colors">
                                 <div className={`w-3 h-3 rounded-full shadow-md transition-all duration-300 ${securityMode ? 'translate-x-5 bg-cyan-400' : 'translate-x-0 bg-white'}`}></div>
+                            </div>
+                        </div>
+
+                        {/* Spotify Integration */}
+                        <div className="p-4 bg-gray-50 dark:bg-black/20 rounded-2xl border border-gray-100 dark:border-gray-800 mt-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-[#1DB954]/10 rounded-xl text-[#1DB954]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.24 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15.001 10.62 18.66 12.84c.42.24.6.84.3 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.54-1.02.72-1.56.42z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-800 dark:text-white">Spotify DJ Agent</h4>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Allow Zylron to control your music</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={async () => {
+                                        if (spotifyConnected) return;
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            if (!token) return alert('Please login first');
+                                            const BASE_URL = process.env.NODE_ENV === 'production' ? 'https://zylron-agent-ai.onrender.com' : 'http://localhost:5001';
+                                            const res = await fetch(`${BASE_URL}/api/spotify/login`, {
+                                                headers: { 'Authorization': `Bearer ${token}` }
+                                            });
+                                            const data = await res.json();
+                                            if (data.url) window.location.href = data.url;
+                                        } catch(e) {
+                                            console.error(e);
+                                            alert("Failed to connect to Spotify.");
+                                        }
+                                    }}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${spotifyConnected ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-[#1DB954] text-white hover:bg-[#1ed760] shadow-lg shadow-[#1DB954]/20'}`}
+                                >
+                                    {spotifyConnected ? 'Connected ✅' : 'Connect Spotify'}
+                                </button>
+                            </div>
+                            <div className="bg-gray-100 dark:bg-black/40 p-3 rounded-xl border border-gray-200 dark:border-gray-800 mt-3">
+                                <h5 className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">How to use (Step-by-Step):</h5>
+                                <ol className="text-xs text-gray-600 dark:text-gray-300 space-y-1.5 pl-4 list-decimal marker:text-cyan-500 marker:font-bold">
+                                    <li>Click <b>Connect Spotify</b> to authorize Zylron with your account.</li>
+                                    <li>Open the Spotify app on your phone, laptop, or TV.</li>
+                                    <li>Manually play any song for 1 second to wake up your device.</li>
+                                    <li>Ask Zylron: <i>"Play Starboy by The Weeknd"</i> or <i>"Pause the music"</i>.</li>
+                                </ol>
                             </div>
                         </div>
                     </div>
