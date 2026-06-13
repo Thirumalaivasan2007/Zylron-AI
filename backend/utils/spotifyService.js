@@ -1,11 +1,43 @@
 const axios = require('axios');
 
 /**
+ * Helper to get a fresh Spotify access token using the refresh token
+ */
+const getSpotifyAccessToken = async () => {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN;
+
+    if (!clientId || !clientSecret || !refreshToken) {
+        return process.env.SPOTIFY_ACCESS_TOKEN || null;
+    }
+
+    try {
+        const response = await axios.post('https://accounts.spotify.com/api/token', 
+            new URLSearchParams({
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken
+            }).toString(),
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64')
+                }
+            }
+        );
+        return response.data.access_token;
+    } catch (error) {
+        console.error('🎵 Failed to refresh Spotify token:', error.response?.data || error.message);
+        return null;
+    }
+};
+
+/**
  * Zylron Spotify Orchestration Service
  * Control your music environment via AI commands
  */
 const spotifyAction = async (action, query = '') => {
-    const accessToken = process.env.SPOTIFY_ACCESS_TOKEN;
+    const accessToken = await getSpotifyAccessToken();
     
     if (!accessToken) {
         console.warn('⚠️ Spotify Access Token missing. Action restricted.');
@@ -27,12 +59,13 @@ const spotifyAction = async (action, query = '') => {
                     if (trackUri) {
                         await axios.put('https://api.spotify.com/v1/me/player/play', { uris: [trackUri] }, { headers });
                         return { success: true, message: `Playing: ${query}` };
+                    } else {
+                        return { success: false, message: `Could not find song: ${query}` };
                     }
                 } else {
                     await axios.put('https://api.spotify.com/v1/me/player/play', {}, { headers });
                     return { success: true, message: 'Resumed playback' };
                 }
-                break;
 
             case 'pause':
                 await axios.put('https://api.spotify.com/v1/me/player/pause', {}, { headers });
@@ -47,7 +80,7 @@ const spotifyAction = async (action, query = '') => {
         }
     } catch (error) {
         console.error('🎵 Spotify Service Error:', error.response?.data?.error?.message || error.message);
-        return { success: false, message: 'Spotify control failed. Check active device.' };
+        return { success: false, message: 'Spotify control failed. Ensure Spotify is open and active on a device.' };
     }
 };
 
