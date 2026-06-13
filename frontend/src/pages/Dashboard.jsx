@@ -2557,25 +2557,34 @@ const Dashboard = () => {
                                                                 </div>
 
                                                                 {/* 🚀 ACTION CLUSTER (Clean Dedicated Row) */}
-                                                                {msg.previewUrl && (
+                                                                {(msg.previewUrl || (msg.content && msg.content.includes('```html'))) && (
                                                                     <div className="flex gap-3 mt-1 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full">
-                                                                        <button 
-                                                                            type="button" 
-                                                                            onClick={() => window.open(`${msg.previewUrl}&t=${Date.now()}`, '_blank')} 
-                                                                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest hover:scale-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95"
-                                                                        >
-                                                                            <Globe size={14} /> Launch Live Preview
-                                                                        </button>
-                                                                        <button 
-                                                                            type="button" 
-                                                                            onClick={() => {
-                                                                                setPreviewCode(`<iframe src="${msg.previewUrl}&t=${Date.now()}" style="width:100%;height:100%;border:none;background:#0f172a;" title="Neural Sandbox"></iframe>`);
-                                                                                setIsCodeModalOpen(true);
-                                                                            }} 
-                                                                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-cyan-400 text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-[0_0_15px_rgba(6,182,212,0.1)] active:scale-95"
-                                                                        >
-                                                                            <Monitor size={14} /> Neural Sandbox
-                                                                        </button>
+                                                                        {msg.previewUrl && (
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => window.open(`${msg.previewUrl}&t=${Date.now()}`, '_blank')} 
+                                                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest hover:scale-110 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95"
+                                                                            >
+                                                                                <Globe size={14} /> Launch Live Preview
+                                                                            </button>
+                                                                        )}
+                                                                        
+                                                                        {msg.content && msg.content.includes('```html') && (
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => {
+                                                                                    // Extract HTML from the first markdown block
+                                                                                    const match = msg.content.match(/```html\n([\s\S]*?)```/);
+                                                                                    if (match && match[1]) {
+                                                                                        setPreviewCode(match[1]);
+                                                                                        setIsCodeModalOpen(true);
+                                                                                    }
+                                                                                }} 
+                                                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-cyan-400 text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-[0_0_15px_rgba(6,182,212,0.1)] active:scale-95"
+                                                                            >
+                                                                                <Monitor size={14} /> Open Neural Sandbox
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                             </div>
