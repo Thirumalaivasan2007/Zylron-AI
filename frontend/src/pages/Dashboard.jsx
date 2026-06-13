@@ -207,7 +207,7 @@ const TypewriterMarkdown = ({ text, animate, onPreviewHtml }) => {
                             <div className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{match[1]}</span>
                                 <div className="flex items-center gap-3">
-                                    {(match[1] === 'html' || match[1] === 'xml') && onPreviewHtml && (
+                                    {['html', 'xml', 'javascript', 'js', 'jsx', 'react', 'css', 'vue'].includes(match[1]?.toLowerCase()) && onPreviewHtml && (
                                         <button 
                                             onClick={() => onPreviewHtml(content)}
                                             className="text-[10px] flex items-center gap-1 font-bold uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
@@ -2557,7 +2557,7 @@ const Dashboard = () => {
                                                                 </div>
 
                                                                 {/* 🚀 ACTION CLUSTER (Clean Dedicated Row) */}
-                                                                {(msg.previewUrl || (msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')))) && (
+                                                                {(msg.previewUrl || (msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('```jsx') || msg.content.includes('```js') || msg.content.includes('```javascript') || msg.content.includes('```react') || msg.content.includes('```vue') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')))) && (
                                                                     <div className="flex gap-3 mt-1 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full">
                                                                         {msg.previewUrl && (
                                                                             <button 
@@ -2569,12 +2569,12 @@ const Dashboard = () => {
                                                                             </button>
                                                                         )}
                                                                         
-                                                                        {msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')) && (
+                                                                        {msg.content && (msg.content.includes('```html') || msg.content.includes('```HTML') || msg.content.includes('```jsx') || msg.content.includes('```js') || msg.content.includes('```javascript') || msg.content.includes('```react') || msg.content.includes('```vue') || msg.content.includes('<!DOCTYPE html>') || msg.content.includes('<html')) && (
                                                                             <button 
                                                                                 type="button" 
                                                                                 onClick={() => {
-                                                                                    // Extract HTML from markdown block or raw HTML
-                                                                                    const mdMatch = msg.content.match(/```(?:html|HTML)?\n([\s\S]*?)```/);
+                                                                                    // Extract code from markdown block or raw HTML
+                                                                                    const mdMatch = msg.content.match(/```(?:html|HTML|jsx|js|javascript|react|vue|css)?\n([\s\S]*?)```/i);
                                                                                     const htmlMatch = msg.content.match(/(<!DOCTYPE html>[\s\S]*?<\/html>)/i) || msg.content.match(/(<html[\s\S]*?<\/html>)/i);
                                                                                     
                                                                                     if (mdMatch && mdMatch[1]) {

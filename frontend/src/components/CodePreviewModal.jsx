@@ -15,53 +15,139 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
     const trimmedCode = code.trim();
     const isFullHtml = trimmedCode.toLowerCase().startsWith('<!doctype') || trimmedCode.toLowerCase().startsWith('<html');
     const isIframe = trimmedCode.toLowerCase().startsWith('<iframe');
+    const isReact = trimmedCode.includes('import React') || trimmedCode.includes('export default') || trimmedCode.includes('ReactDOM') || trimmedCode.includes('className=') || trimmedCode.includes('useState(');
 
-    // FORCE WRAPPER: Even if it's full HTML or an iframe, we wrap it to ensure 
-    // the parent document (srcDoc) has a 100% height body with a dark background.
-    // This prevents the "white block" issue where a nested iframe collapses.
-    const srcDoc = `
-        <!DOCTYPE html>
-        <html style="height: 100%; margin: 0; padding: 0; background: #000;">
-            <head>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <style>
-                    html, body { 
-                        height: 100%; 
-                        margin: 0; 
-                        padding: 0; 
-                        background: #000; 
-                        overflow: hidden;
-                        display: flex;
-                        flex-direction: column;
-                    }
-                    #zylron-root { 
-                        flex: 1; 
-                        display: flex; 
-                        flex-direction: column;
-                        height: 100%;
-                        width: 100%;
-                    }
-                    /* Ensure nested iframes fill the container */
-                    #zylron-root > iframe {
-                        width: 100% !important;
-                        height: 100% !important;
-                        flex: 1;
-                    }
-                </style>
-            </head>
-            <body>
-                <div id="zylron-root">${trimmedCode}</div>
-                <script>
-                    window.onerror = function(msg, url, line) {
-                        const div = document.createElement('div');
-                        div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
-                        div.innerText = 'Zylron Runtime Error: ' + msg + ' (Line ' + line + ')';
-                        document.body.prepend(div);
-                    }
-                </script>
-            </body>
-        </html>
-    `;
+    let srcDoc = '';
+
+    if (isFullHtml || isIframe) {
+        srcDoc = `
+            <!DOCTYPE html>
+            <html style="height: 100%; margin: 0; padding: 0; background: #000;">
+                <head>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                        html, body { 
+                            height: 100%; 
+                            margin: 0; 
+                            padding: 0; 
+                            background: #000; 
+                            overflow: hidden;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        #zylron-root { 
+                            flex: 1; 
+                            display: flex; 
+                            flex-direction: column;
+                            height: 100%;
+                            width: 100%;
+                        }
+                        /* Ensure nested iframes fill the container */
+                        #zylron-root > iframe {
+                            width: 100% !important;
+                            height: 100% !important;
+                            flex: 1;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div id="zylron-root">${trimmedCode}</div>
+                    <script>
+                        window.onerror = function(msg, url, line) {
+                            const div = document.createElement('div');
+                            div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
+                            div.innerText = 'Zylron Runtime Error: ' + msg + ' (Line ' + line + ')';
+                            document.body.prepend(div);
+                        }
+                    </script>
+                </body>
+            </html>
+        `;
+    } else if (isReact) {
+        // Safe React compile wrapper
+        const safeCode = trimmedCode
+            .replace(/import\s+.*?\s+from\s+['"].*?['"];?/g, '')
+            .replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
+            .replace(/export\s+default\s+(\w+);?/, '');
+
+        srcDoc = `
+            <!DOCTYPE html>
+            <html style="height: 100%; margin: 0; padding: 0; background: #000;">
+                <head>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+                    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+                    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                    <script src="https://unpkg.com/lucide@latest"></script>
+                    <style>
+                        html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }
+                        #zylron-root { min-height: 100%; width: 100%; }
+                    </style>
+                </head>
+                <body>
+                    <div id="zylron-root"></div>
+                    <script type="text/babel">
+                        window.onerror = function(msg, url, line) {
+                            const div = document.createElement('div');
+                            div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
+                            div.innerText = 'React Error: ' + msg + ' (Line ' + line + ')';
+                            document.body.prepend(div);
+                        };
+
+                        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+                        ${safeCode}
+
+                        // Mount Logic
+                        let AppComp = null;
+                        if (typeof App !== 'undefined') AppComp = App;
+                        else if (typeof Calculator !== 'undefined') AppComp = Calculator;
+                        else if (typeof Main !== 'undefined') AppComp = Main;
+                        else if (typeof Dashboard !== 'undefined') AppComp = Dashboard;
+                        else {
+                            const matches = \`${safeCode}\`.match(/function\\s+([A-Z]\\w+)/g);
+                            if (matches && matches.length > 0) {
+                                const name = matches[matches.length - 1].replace('function ', '').trim();
+                                AppComp = eval(name);
+                            }
+                        }
+
+                        if (AppComp) {
+                            const root = ReactDOM.createRoot(document.getElementById('zylron-root'));
+                            root.render(<AppComp />);
+                        } else {
+                            document.getElementById('zylron-root').innerHTML = '<div style="color:#ef4444;padding:20px;">Error: Could not find a React component to render.</div>';
+                        }
+                    </script>
+                </body>
+            </html>
+        `;
+    } else {
+        // Plain JS / CSS / HTML Snippet
+        srcDoc = `
+            <!DOCTYPE html>
+            <html style="height: 100%; margin: 0; padding: 0; background: #000;">
+                <head>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                        html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }
+                    </style>
+                </head>
+                <body>
+                    <div id="zylron-root">
+                        ${trimmedCode.includes('<') && !trimmedCode.includes('function') ? trimmedCode : ''}
+                    </div>
+                    <script>
+                        try {
+                            ${trimmedCode.includes('<') && !trimmedCode.includes('function') ? '' : trimmedCode}
+                        } catch(e) {
+                            console.error(e);
+                        }
+                    </script>
+                </body>
+            </html>
+        `;
+    }
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
