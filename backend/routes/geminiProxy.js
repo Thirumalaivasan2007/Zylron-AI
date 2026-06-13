@@ -512,8 +512,8 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 tools: [{ functionDeclarations: toolDefinitions }]
             });
 
-            let chatParts = chatData.candidates[0].content.parts;
-            let functionCallPart = chatParts.find(p => p.functionCall);
+            let responseParts = chatData.candidates[0].content.parts;
+            let functionCallPart = responseParts.find(p => p.functionCall);
 
             if (functionCallPart) {
                 const fc = functionCallPart.functionCall;
@@ -545,11 +545,11 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 chatData = await neuralCall({
                     contents: fullContents
                 });
-                chatParts = chatData.candidates[0].content.parts;
+                responseParts = chatData.candidates[0].content.parts;
                 agentUsed = true;
             }
 
-            const rawChatText = chatParts.find(p => p.text)?.text || "Done.";
+            const rawChatText = responseParts.find(p => p.text)?.text || "Done.";
             const chatText = applyIdentityShield(rawChatText, prompt); // 🛡️
             const finalTitle = await saveToHistory(chatText); // ✅ Get title from saver
             return res.json({ 
