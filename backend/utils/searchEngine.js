@@ -20,7 +20,7 @@ const searchWeb = async (query) => {
         const payload = {
             api_key: TAVILY_API_KEY,
             query: query + ` (Current Date: ${new Date().toDateString()})`,
-            search_depth: "basic",
+            search_depth: "advanced",
             include_answer: true,
             max_results: 5
         };
