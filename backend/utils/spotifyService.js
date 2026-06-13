@@ -82,7 +82,13 @@ const spotifyAction = async (action, query = '', user = null) => {
                 return { success: false, message: 'Unknown action' };
         }
     } catch (error) {
-        console.error('🎵 Spotify Service Error:', error.response?.data?.error?.message || error.message);
+        const errorMsg = error.response?.data?.error?.message || error.message;
+        console.error('🎵 Spotify Service Error:', errorMsg);
+        
+        if (error.response?.status === 403 || errorMsg.toLowerCase().includes('premium')) {
+            return { success: false, message: 'Spotify control failed: This feature requires a Spotify Premium account.' };
+        }
+        
         return { success: false, message: 'Spotify control failed. Ensure Spotify is open and active on a device.' };
     }
 };
