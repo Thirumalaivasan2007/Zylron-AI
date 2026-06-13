@@ -3,7 +3,8 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-
+const { searchWeb } = require('./searchEngine');
+const { spotifyAction } = require('./spotifyService');
 const toolDefinitions = [
     {
         name: "searchGitHub",
@@ -75,10 +76,45 @@ const toolDefinitions = [
             },
             required: ["title", "dateTime"]
         }
+    },
+    {
+        name: "searchWeb",
+        description: "Search the live internet for up-to-date information, news, or answers that require real-time data.",
+        parameters: {
+            type: "object",
+            properties: {
+                query: { type: "string", description: "The search query." }
+            },
+            required: ["query"]
+        }
+    },
+    {
+        name: "spotifyAction",
+        description: "Control Spotify playback. Can play a specific song, pause, or skip to the next track.",
+        parameters: {
+            type: "object",
+            properties: {
+                action: { type: "string", description: "The action: 'play', 'pause', 'next'." },
+                query: { type: "string", description: "The song or artist to search and play. Only used if action is 'play'." }
+            },
+            required: ["action"]
+        }
     }
 ];
 
 const toolHandlers = {
+    searchWeb: async ({ query }) => {
+        try {
+            return await searchWeb(query);
+        } catch (error) { return `Search failed: ${error.message}`; }
+    },
+
+    spotifyAction: async ({ action, query }) => {
+        try {
+            const res = await spotifyAction(action, query);
+            return res.message;
+        } catch (error) { return `Spotify failed: ${error.message}`; }
+    },
     searchGitHub: async ({ query }) => {
         try {
             const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc`;

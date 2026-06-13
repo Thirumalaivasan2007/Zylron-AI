@@ -507,16 +507,55 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 fullContents[0].parts[fullContents[0].parts.length - 1].text = personaSysText + "\n\n" + fullContents[0].parts[fullContents[0].parts.length - 1].text;
             }
 
-            const chatData = await neuralCall({
-                contents: fullContents
+            let chatData = await neuralCall({
+                contents: fullContents,
+                tools: [{ functionDeclarations: toolDefinitions }]
             });
-            const rawChatText = chatData.candidates[0].content.parts[0].text;
+
+            let chatParts = chatData.candidates[0].content.parts;
+            let functionCallPart = chatParts.find(p => p.functionCall);
+
+            if (functionCallPart) {
+                const fc = functionCallPart.functionCall;
+                console.log(`🤖 Zylron Swarm Mode executing tool: ${fc.name} with args:`, fc.args);
+                
+                let apiResponse = null;
+                const handler = toolHandlers[fc.name];
+                if (handler) {
+                    apiResponse = await handler(fc.args);
+                } else {
+                    apiResponse = "Tool not recognized.";
+                }
+
+                // Add the model's function call to history
+                fullContents.push(chatData.candidates[0].content);
+                
+                // Add the tool execution result
+                fullContents.push({
+                    role: "function",
+                    parts: [{
+                        functionResponse: {
+                            name: fc.name,
+                            response: { result: apiResponse }
+                        }
+                    }]
+                });
+
+                // Call again with the result
+                chatData = await neuralCall({
+                    contents: fullContents
+                });
+                chatParts = chatData.candidates[0].content.parts;
+                agentUsed = true;
+            }
+
+            const rawChatText = chatParts.find(p => p.text)?.text || "Done.";
             const chatText = applyIdentityShield(rawChatText, prompt); // 🛡️
             const finalTitle = await saveToHistory(chatText); // ✅ Get title from saver
             return res.json({ 
                 text: chatText, 
                 title: finalTitle, // 🧠 Send generated title to UI
-                agentUsed: false,
+                agentUsed: agentUsed,
                 previewUrl: null 
             });
         }
