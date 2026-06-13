@@ -16,13 +16,21 @@ const searchWeb = async (query) => {
 
         console.log(`Zylron Search Engine: Querying web for "${query}"...`);
         
-        const response = await axios.post('https://api.tavily.com/search', {
+        const isNews = /news|latest|today|now|recent/i.test(query);
+        const payload = {
             api_key: TAVILY_API_KEY,
-            query: query,
+            query: query + ` (Current Date: ${new Date().toDateString()})`,
             search_depth: "basic",
             include_answer: true,
             max_results: 5
-        });
+        };
+
+        if (isNews) {
+            payload.topic = "news";
+            payload.days = 3;
+        }
+
+        const response = await axios.post('https://api.tavily.com/search', payload);
 
         if (response.data && response.data.results) {
             const results = response.data.results.map((r, i) => 
