@@ -7,19 +7,82 @@ const { sendMailViaProxy } = require('../utils/emailService');
 const apiKey = (process.env.GEMINI_API_KEY || "").trim();
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// 2. Simple, clean AI response function using Gemini 2.0 Flash (Verified for this Key)
+const { searchWeb } = require('../utils/searchEngine');
+const { spotifyAction } = require('../utils/spotifyService');
+
+// Define Gemini Tools
+const zylronTools = [
+  {
+    functionDeclarations: [
+      {
+        name: "searchWeb",
+        description: "Search the live internet for up-to-date information, news, or answers that require real-time data.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            query: { type: "STRING", description: "The search query." }
+          },
+          required: ["query"]
+        }
+      },
+      {
+        name: "spotifyAction",
+        description: "Control Spotify playback. Can play a specific song, pause, or skip to the next track.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            action: { type: "STRING", description: "The action: 'play', 'pause', 'next'." },
+            query: { type: "STRING", description: "The song or artist to search and play. Only used if action is 'play'." }
+          },
+          required: ["action"]
+        }
+      }
+    ]
+  }
+];
+
+// 2. Advanced AI response function with Autonomous Tool Calling
 const generateAIResponse = async (message) => {
     try {
-        const systemInstruction = "You are Zylron AI, an ultra-smart, highly advanced, and helpful AI assistant created by Thirumalai. Keep your responses crisp, intelligent, and tailored to the user's context.";
+        const systemInstruction = "You are Zylron AI, an ultra-smart, highly advanced, and helpful AI assistant created by Thirumalai. Keep responses crisp and intelligent. If the user asks for real-time information or news, USE searchWeb. If they ask to play music, USE spotifyAction.";
         
-        // Using the verified Gemini 2.5 Flash Lite model (Bypasses 429 Quota Limits)
         const model = genAI.getGenerativeModel({ 
             model: "gemini-2.0-flash",
-            systemInstruction: systemInstruction 
+            systemInstruction: systemInstruction,
+            tools: zylronTools
         });
         
-        const result = await model.generateContent(message);
-        const response = await result.response;
+        const chat = model.startChat();
+        let result = await chat.sendMessage(message);
+        let response = result.response;
+        
+        // Check if Gemini wants to call a tool
+        const functionCallPart = response.candidates[0]?.content?.parts?.find(part => part.functionCall);
+        
+        if (functionCallPart) {
+            const { name, args } = functionCallPart.functionCall;
+            console.log(`🤖 Zylron executing tool: ${name} with args:`, args);
+            
+            let apiResponse = null;
+            if (name === "searchWeb") {
+                apiResponse = await searchWeb(args.query);
+            } else if (name === "spotifyAction") {
+                const res = await spotifyAction(args.action, args.query);
+                apiResponse = res.message;
+            } else {
+                apiResponse = "Tool not recognized.";
+            }
+            
+            // Send the tool's output back to Gemini so it can generate a final answer
+            result = await chat.sendMessage([{
+                functionResponse: {
+                    name: name,
+                    response: { result: apiResponse }
+                }
+            }]);
+            response = result.response;
+        }
+        
         return response.text();
     } catch (error) {
         console.error("Gemini 2.0 API Error:", error);
