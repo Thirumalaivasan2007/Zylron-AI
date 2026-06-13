@@ -19,7 +19,7 @@ const searchWeb = async (query) => {
         const response = await axios.post('https://api.tavily.com/search', {
             api_key: TAVILY_API_KEY,
             query: query,
-            search_depth: "smart",
+            search_depth: "basic",
             include_answer: true,
             max_results: 5
         });
