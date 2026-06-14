@@ -753,7 +753,7 @@ const Dashboard = () => {
                     setFeedbackToast("Shared successfully! ✨");
                 } catch (err) {
                     // User cancelled or share failed, but link is already copied
-                    console.log("Native share dismissed");
+                    
                 }
             }
 
@@ -1132,7 +1132,7 @@ const Dashboard = () => {
                 });
                 if (response.ok) break;
                 retryCount++;
-                console.log(`⏳ Neural Link: Retrying fetch (${retryCount}/${maxRetries})...`);
+                ...`);
                 await new Promise(r => setTimeout(r, 2000)); // Wait 2s
             }
             
@@ -1517,7 +1517,7 @@ const Dashboard = () => {
                 
                 // 🎵 OS MEDIA BYPASS: Trigger Desktop API if instructed
                 if (data.osMediaAction && window.electronAPI) {
-                    console.log('🤖 Zylron Fallback: Triggering OS Media Key ->', data.osMediaAction);
+                    
                     window.electronAPI.osMediaControl(data.osMediaAction);
                 }
             } catch (proxyError) {
