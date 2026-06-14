@@ -209,46 +209,46 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                                 <div className="flex flex-col gap-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                         {chat.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
-                                        <div className="text-sm font-bold tracking-tight line-clamp-2 leading-snug break-words pr-2">
+                                        <div className="text-[15px] font-bold tracking-tight line-clamp-2 leading-snug break-words pr-2 text-gray-800 dark:text-gray-200">
                                             {chat.message || chat.title || "New Chat"}
                                         </div>
                                         {currentSessionId === chat.sessionId && (
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0" />
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[9px] font-bold text-indigo-500/80 uppercase">
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                        <span className="text-[11px] font-bold text-indigo-500/90 dark:text-indigo-400 uppercase">
                                             {chat.folder || 'personal'}
                                         </span>
-                                        <span className="w-0.5 h-0.5 rounded-full bg-gray-400 opacity-30"></span>
-                                        <span className="text-[9px] font-medium text-gray-400">
+                                        <span className="w-1 h-1 rounded-full bg-gray-400 opacity-40"></span>
+                                        <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                                             {chat.createdAt ? new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                                         </span>
                                         {/* Storage Status Badge */}
-                                        <span className="ml-auto text-[8px] font-black text-emerald-500/40 uppercase tracking-widest flex items-center gap-1">
-                                            <div className="w-1 h-1 rounded-full bg-emerald-500/40"></div>
+                                        <span className="ml-auto text-[9px] font-black text-emerald-600 dark:text-emerald-400/70 uppercase tracking-widest flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
                                             Stored
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between mt-2 pr-1">
+                                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800/50">
                                         {/* Folder Selection (Compact) */}
                                         <select 
                                             value={chat.folder || 'personal'} 
                                             onClick={(e) => e.stopPropagation()}
                                             onChange={(e) => { e.stopPropagation(); updateSessionFolder(chat.sessionId, e.target.value); }}
-                                            className="bg-transparent text-[9px] text-gray-400 hover:text-cyan-500 border-none p-0 focus:outline-none cursor-pointer"
+                                            className="bg-gray-100 dark:bg-gray-800/50 text-[11px] font-medium text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 border border-gray-200 dark:border-gray-700/50 rounded-md px-2 py-0.5 focus:outline-none cursor-pointer transition-all"
                                         >
                                             <option value="personal">Personal</option>
                                             <option value="work">Work</option>
                                             <option value="research">Research</option>
                                         </select>
 
-                                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={(e) => { e.stopPropagation(); togglePinSession(chat.sessionId); }} className="p-1 hover:bg-gray-200 dark:hover:bg-black/40 rounded transition-all">
-                                                <Pin size={12} className={chat.pinned ? 'text-amber-500 fill-amber-500' : 'text-gray-400'} />
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                            <button onClick={(e) => { e.stopPropagation(); togglePinSession(chat.sessionId); }} className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-md transition-all">
+                                                <Pin size={14} className={chat.pinned ? 'text-amber-500 fill-amber-500' : 'text-gray-400 dark:text-gray-500'} />
                                             </button>
-                                            <button onClick={(e) => { e.stopPropagation(); deleteSession(chat.sessionId); }} className="p-1 hover:bg-red-500/10 hover:text-red-500 rounded">
-                                                <Trash2 size={12} className="text-gray-400" />
+                                            <button onClick={(e) => { e.stopPropagation(); deleteSession(chat.sessionId); }} className="p-1.5 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400 rounded-md transition-all text-gray-400 dark:text-gray-500">
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>
