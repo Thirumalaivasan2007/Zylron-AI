@@ -209,7 +209,7 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                                 <div className="flex flex-col gap-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                         {chat.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
-                                        <div className="truncate text-sm font-bold tracking-tight">
+                                        <div className="text-sm font-bold tracking-tight line-clamp-2 leading-snug break-words pr-2">
                                             {chat.message || chat.title || "New Chat"}
                                         </div>
                                         {currentSessionId === chat.sessionId && (
