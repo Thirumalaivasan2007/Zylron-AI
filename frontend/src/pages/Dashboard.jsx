@@ -752,7 +752,7 @@ const Dashboard = () => {
                     setFeedbackToast("Shared successfully! ✨");
                 } catch (err) {
                     // User cancelled or share failed, but link is already copied
-                    
+                    console.log("Native share dismissed");
                 }
             }
 
@@ -1116,7 +1116,7 @@ const Dashboard = () => {
             // ✅ Primary: Fetch from MongoDB Backend (The Product Source)
             // Using a relative path so it works in both local and production
             // ✅ Production-Ready: Dynamic URL selection
-            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
             const proxyUrl = `${API_BASE}/api/gemini/history`; 
             
             let response;
@@ -1131,7 +1131,7 @@ const Dashboard = () => {
                 });
                 if (response.ok) break;
                 retryCount++;
-                ...`);
+                console.log(`⏳ Neural Link: Retrying fetch (${retryCount}/${maxRetries})...`);
                 await new Promise(r => setTimeout(r, 2000)); // Wait 2s
             }
             
@@ -1207,7 +1207,7 @@ const Dashboard = () => {
         
         // ✅ Sync to MongoDB (Production Logic)
         try {
-            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
             await fetch(`${API_BASE}/api/gemini/update-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1239,7 +1239,7 @@ const Dashboard = () => {
             if (!session.messages || session.messages.length === 0) {
                 try {
                     setIsLoading(true);
-                    const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+                    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
                     const response = await fetch(`${API_BASE}/api/gemini/session/${sessionId}`);
                     if (response.ok) {
                         const fullSession = await response.json();
@@ -1286,7 +1286,7 @@ const Dashboard = () => {
         
         // 2. Delete from MongoDB (Production Logic)
         try {
-            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
             await fetch(`${API_BASE}/api/gemini/delete/${sessionId}`, { method: 'DELETE' });
         } catch (e) { console.warn("Mongo Delete failed:", e); }
     };
@@ -1515,7 +1515,7 @@ const Dashboard = () => {
                 
                 // 🎵 OS MEDIA BYPASS: Trigger Desktop API if instructed
                 if (data.osMediaAction && window.electronAPI) {
-                    
+                    console.log('🤖 Zylron Fallback: Triggering OS Media Key ->', data.osMediaAction);
                     window.electronAPI.osMediaControl(data.osMediaAction);
                 }
             } catch (proxyError) {
@@ -1767,7 +1767,7 @@ const Dashboard = () => {
         
         // 2. Persist to MongoDB (Production Logic)
         try {
-            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
             await fetch(`${API_BASE}/api/gemini/update-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1794,7 +1794,7 @@ const Dashboard = () => {
 
         // 2. Persist to MongoDB (Production Logic)
         try {
-            const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://zylron-agent-ai.onrender.com';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'; const API_BASE = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
             await fetch(`${API_BASE}/api/gemini/update-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
