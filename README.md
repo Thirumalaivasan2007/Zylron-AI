@@ -6,7 +6,7 @@
   <p><strong>A Hyper-Intelligent, Multi-Modal Agentic Platform for the Future of Human-AI Collaboration.</strong></p>
 
   <p>
-    <a href="https://zylron-agent-ai.vercel.app">🌐 Live Web App</a> • 
+    <a href="https://zylronai.app">🌐 Live Web App</a> • 
     <a href="https://github.com/Thirumalaivasan2007/Zylron-Agent-AI/releases">📦 Download JARVIS Desktop</a>
   </p>
 

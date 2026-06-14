@@ -25,7 +25,7 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:5173',
-  'https://zylron-agent-ai.vercel.app',      // ✅ Vercel Production
+  'https://zylronai.app',      // ✅ Vercel Production
   'https://zylron-agent-ai.onrender.com',    // ✅ Backend itself
 ];
 

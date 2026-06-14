@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
 
     const loginWithEmail = async (email) => {
         const actionCodeSettings = {
-            url: window.location.origin + '/login',
+            url: 'https://zylronai.app/login',
             handleCodeInApp: true,
         };
         try {

@@ -58,7 +58,7 @@ router.get('/callback', async (req, res) => {
 
         // Redirect back to frontend dashboard
         const FRONTEND_URL = process.env.NODE_ENV === 'production'
-            ? 'https://zylron-agent-ai.vercel.app/dashboard'
+            ? 'https://zylronai.app/dashboard'
             : 'http://localhost:5173/dashboard';
             
         res.redirect(`${FRONTEND_URL}?spotify=success`);
