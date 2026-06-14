@@ -13,7 +13,7 @@ const { sendMailViaProxy } = require('../utils/emailService');
 const API_KEY = (process.env.GEMINI_API_KEY || "").trim();
 const OMNI_SNAPSHOT_PATH = path.join(__dirname, '..', '..', 'desktop', 'omni_snapshot.jpg');
 const BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://zylron-agent-ai.onrender.com' 
+    ? 'https://zylron-api-dev.onrender.com' 
     : 'http://localhost:5001';
 
 // 🚀 ULTRA-RESILIENT NEURAL DISPATCHER

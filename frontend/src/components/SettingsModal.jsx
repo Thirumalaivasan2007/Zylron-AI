@@ -15,9 +15,8 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
                 if (!userRaw) return;
                 const token = JSON.parse(userRaw).token;
                 if (!token) return;
-                const BASE_URL = process.env.NODE_ENV === 'production' 
-                    ? 'https://zylron-agent-ai.onrender.com' 
-                    : 'http://localhost:5001';
+                const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+                const BASE_URL = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
                 const res = await fetch(`${BASE_URL}/api/spotify/status`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -206,7 +205,8 @@ const SettingsModal = ({ isOpen, onClose, theme, toggleTheme, isMemoryEnabled, t
                                             if (!userRaw) return alert('Please login first');
                                             const token = JSON.parse(userRaw).token;
                                             if (!token) return alert('Please login first');
-                                            const BASE_URL = process.env.NODE_ENV === 'production' ? 'https://zylron-agent-ai.onrender.com' : 'http://localhost:5001';
+                                            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+                                            const BASE_URL = backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl;
                                             const res = await fetch(`${BASE_URL}/api/spotify/login`, {
                                                 headers: { 'Authorization': `Bearer ${token}` }
                                             });

@@ -8,7 +8,7 @@ const User = require('../models/User');
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI = process.env.NODE_ENV === 'production'
-    ? 'https://zylron-agent-ai.onrender.com/api/spotify/callback'
+    ? 'https://zylron-api-dev.onrender.com/api/spotify/callback'
     : 'http://localhost:5001/api/spotify/callback';
 
 // 🚀 Generate the login URL
@@ -58,7 +58,7 @@ router.get('/callback', async (req, res) => {
 
         // Redirect back to frontend dashboard
         const FRONTEND_URL = process.env.NODE_ENV === 'production'
-            ? 'https://zylron-agent-ai.vercel.app/dashboard'
+            ? 'https://zylronai.app/dashboard'
             : 'http://localhost:5173/dashboard';
             
         res.redirect(`${FRONTEND_URL}?spotify=success`);

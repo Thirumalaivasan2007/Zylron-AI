@@ -19,20 +19,17 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
 
-// 1. Unified CORS Configuration
+// 1. Unified CORS Configuration (Strict Origins)
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
   'http://localhost:5173',
-  'https://zylron-agent-ai.vercel.app',      // ✅ Vercel Production
-  'https://zylron-agent-ai.onrender.com',    // ✅ Backend itself
+  'https://zylron-agent-ai-git-dev-thirumalaivasan2007s-projects.vercel.app',
+  'https://zylronai.app'
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow no-origin (mobile/desktop/Postman) + allowed list + any Vercel preview
-    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+    // Allow no-origin (mobile/desktop/Postman) + exact allowed list
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

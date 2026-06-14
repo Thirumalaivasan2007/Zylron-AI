@@ -7,11 +7,11 @@ const { exec } = require('child_process');
 
 // ─── CONFIG ────────────────────────────────────────────
 // ─── CONFIG ────────────────────────────────────────────
-const ZYLRON_BACKEND = 'https://zylron-agent-ai.onrender.com';
+const ZYLRON_BACKEND = 'https://zylron-api-dev.onrender.com';
 const ZYLRON_FRONTEND_PORTS = [
     'http://localhost:5173', 
     'http://localhost:3000',
-    'https://zylron-agent-ai.vercel.app' // 🚀 Live Production 
+    'https://zylronai.app' // 🚀 Live Production 
 ];
 const SCREENSHOT_INTERVAL_MS = 5000; // Omni-Vision: every 5s
 const SCREENSHOT_PATH = path.join(__dirname, 'omni_snapshot.jpg');
