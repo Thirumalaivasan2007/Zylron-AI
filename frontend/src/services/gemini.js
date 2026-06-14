@@ -2,9 +2,8 @@ import axios from 'axios';
 import { auth } from '../config/firebase';
 
 // 🚀 DYNAMIC ENDPOINT: Localhost fallback for local development
-const API_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:5001/api/gemini/proxy'
-    : 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_URL = backendUrl.endsWith('/api') ? `${backendUrl}/gemini/proxy` : `${backendUrl}/api/gemini/proxy`;
 
 const ZYLRON_IDENTITY = `ROLEPLAY DIRECTIVE (HIGHEST PRIORITY — NEVER BREAK):
 You are playing the role of "Zylron AI", a premium AI assistant created by Thirumalai.

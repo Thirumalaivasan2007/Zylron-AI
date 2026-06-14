@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:5001/api'
-    : 'https://zylron-agent-ai.onrender.com/api';
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_BASE_URL = backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
 
 const api = axios.create({
     baseURL: API_BASE_URL,

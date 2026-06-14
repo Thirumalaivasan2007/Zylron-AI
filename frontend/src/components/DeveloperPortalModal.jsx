@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Code, Copy, Check, Shield, Zap, AlertTriangle, Key } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:5001/api'
-  : 'https://zylron-agent-ai.onrender.com/api';
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_BASE = backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
 
 const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
   const [apiKeys, setApiKeys] = useState([]);
@@ -236,7 +235,7 @@ const DeveloperPortalModal = ({ isOpen, onClose, isPro }) => {
             </p>
             <div className="relative group bg-black/60 p-4 rounded-xl border border-white/5 font-mono text-[11px] text-emerald-400 select-all overflow-x-auto">
               <span className="block whitespace-pre">
-{`curl -X POST ${window.location.hostname === 'localhost' ? 'http://localhost:5001' : 'https://zylron-agent-ai.onrender.com'}/api/v1/agent/chat \\
+{`curl -X POST \${backendUrl.endsWith('/api') ? backendUrl.slice(0, -4) : backendUrl}/api/v1/agent/chat \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: YOUR_API_KEY_HERE" \\
   -d '{"prompt": "Generate a quick python binary search function"}'`}

@@ -408,9 +408,8 @@ const Dashboard = () => {
 
         try {
             const token = JSON.parse(localStorage.getItem('user'))?.token;
-            const API_BASE = window.location.hostname === 'localhost'
-                ? 'http://localhost:5001/api'
-                : 'https://zylron-agent-ai.onrender.com/api';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+            const API_BASE = backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
 
             const response = await fetch(`${API_BASE}/payment/order`, {
                 method: 'POST',
@@ -1477,9 +1476,8 @@ const Dashboard = () => {
             if (detectedUrls && detectedUrls.length > 0) {
                 urlContext = `\n\n[ZYLRON AUTOMATION: User shared these URLs: ${detectedUrls.join(', ')}. Analyze and reference them in your response.]\n`;
             }
-            const proxyUrl = window.location.hostname === 'localhost'
-                ? 'http://localhost:5001/api/gemini/proxy'
-                : 'https://zylron-agent-ai.onrender.com/api/gemini/proxy';
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+            const proxyUrl = backendUrl.endsWith('/api') ? `${backendUrl}/gemini/proxy` : `${backendUrl}/api/gemini/proxy`;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 120000); // 2-min limit
 

@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, HelpCircle, Activity, ChevronDown, Check, Send, AlertTriangle, Bot, User2, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:5001/api'
-  : 'https://zylron-agent-ai.onrender.com/api';
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_BASE = backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
 
 const HelpCenterModal = ({ isOpen, onClose, guestEmail }) => {
   const [activeFaq, setActiveFaq] = useState(null);
