@@ -31,11 +31,15 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow no-origin (mobile/desktop/Postman) + allowed list + any Vercel preview
-    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+    // Allow no-origin (mobile/desktop/Postman) + allowed list + any Vercel preview + explicit domain
+    if (!origin || 
+        origin === 'null' ||
+        allowedOrigins.includes(origin) || 
+        /\.vercel\.app$/.test(origin) ||
+        /zylronai\.app/.test(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     }
   },
   credentials: true,
