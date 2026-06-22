@@ -581,6 +581,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         - Use Tailwind CDN, premium dark theme, glassmorphism effects, and smooth animations.
         - The final output will be ONE self-contained HTML file (all CSS and JS embedded inline).
         - CRITICAL: NEVER mention separate style.css or script.js files.
+        - CRITICAL: If writing React/JSX, NEVER use HTML comments (<!-- -->). Always use JSX comments ({/* */}).
         - ALWAYS tell the user to use the 'Neural Sandbox' or 'Live Preview' to view the app.
         - Keep your blueprint concise and focused on design + features.
         Use an ultra-premium design style.`;
@@ -606,6 +607,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         IMPORTANT: The user wants the main HTML file saved as '${customHtmlFile}'. 
         You MUST use the writeFile tool with filename='${customHtmlFile}'.
         CRITICAL FOR STYLING: Since the file is '${customHtmlFile}' (not index.html), you MUST embed ALL CSS inside a <style> tag and ALL JavaScript inside a <script> tag within the HTML file. Do NOT use separate style.css or script.js files. Make it ONE complete self-contained HTML file.
+        CRITICAL: NEVER use HTML comments (<!-- -->) inside React/JSX. Always use JSX comments ({/* */}).
         Use Tailwind CDN, premium dark theme, glassmorphism, and animations.
         NEVER display raw code links in the chat.
         BLUEPRINT: ${blueprint}`;
