@@ -643,8 +643,11 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
 
         // 🚀 SMART FALLBACK: If no "File:" labels exist, auto-scaffold standard blocks
         if (savedFiles.length === 0) {
+            // First try CODER's text, then ARCHITECT's blueprint
+            const textToParse = aiText.includes('```') ? aiText : blueprint;
+
             // Ultimate HTML Fallback: Match any code block containing HTML
-            const fallbackHtmlMatch = aiText.match(/```[a-z]*\s*\n?([\s\S]*?(?:<!DOCTYPE html>|<html[\s>])[\s\S]*?)\n?```/i);
+            const fallbackHtmlMatch = textToParse.match(/```[a-z]*\s*\n?([\s\S]*?(?:<!DOCTYPE html>|<html[\s>])[\s\S]*?)\n?```/i);
             
             if (fallbackHtmlMatch) {
                 const content = fallbackHtmlMatch[1].trim();
@@ -654,9 +657,9 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 console.log("🤖 Universal Scaffolder: Extracted HTML via Ultimate Fallback");
             } else {
                 // If the ultimate fallback fails, try the standard regexes
-                const htmlBlocks = aiText.match(/```(?:html|markup)\s*\n([\s\S]*?)\n```/ig);
-                const cssBlocks = aiText.match(/```(?:css|style)\s*\n([\s\S]*?)\n```/ig);
-                const jsBlocks = aiText.match(/```(?:javascript|js|jsx)\s*\n([\s\S]*?)\n```/ig);
+                const htmlBlocks = textToParse.match(/```(?:html|markup)\s*\n([\s\S]*?)\n```/ig);
+                const cssBlocks = textToParse.match(/```(?:css|style)\s*\n([\s\S]*?)\n```/ig);
+                const jsBlocks = textToParse.match(/```(?:javascript|js|jsx)\s*\n([\s\S]*?)\n```/ig);
 
                 if (htmlBlocks) {
                     const content = htmlBlocks[0].replace(/```(?:html|markup)\s*\n/i, "").replace(/\n```/i, "");
