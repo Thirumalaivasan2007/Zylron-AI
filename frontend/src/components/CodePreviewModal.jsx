@@ -20,53 +20,27 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
     let srcDoc = '';
 
     if (isFullHtml || isIframe) {
-        srcDoc = `
-            <!DOCTYPE html>
-            <html style="height: 100%; margin: 0; padding: 0; background: #000;">
-                <head>
-                    <script src="https://cdn.tailwindcss.com"></script>
-                    <style>
-                        html, body { 
-                            height: 100%; 
-                            margin: 0; 
-                            padding: 0; 
-                            background: #000; 
-                            overflow: hidden;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        #zylron-root { 
-                            flex: 1; 
-                            display: flex; 
-                            flex-direction: column;
-                            height: 100%;
-                            width: 100%;
-                        }
-                        /* Ensure nested iframes fill the container */
-                        #zylron-root > iframe {
-                            width: 100% !important;
-                            height: 100% !important;
-                            flex: 1;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div id="zylron-root">${trimmedCode}</div>
-                    <script>
-                        window.onerror = function(msg, url, line) {
-                            const div = document.createElement('div');
-                            div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
-                            div.innerText = 'Zylron Runtime Error: ' + msg + ' (Line ' + line + ')';
-                            document.body.prepend(div);
-                        }
-                    </script>
-                </body>
-            </html>
+        // Inject error tracking into the head of the full HTML
+        const errorScript = `
+            <script>
+                window.onerror = function(msg, url, line) {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
+                    div.innerText = 'Zylron Runtime Error: ' + msg + ' (Line ' + line + ')';
+                    document.body.prepend(div);
+                }
+            </script>
         `;
+        
+        if (trimmedCode.includes('<head>')) {
+            srcDoc = trimmedCode.replace('<head>', '<head>' + errorScript);
+        } else {
+            srcDoc = errorScript + trimmedCode;
+        }
     } else if (isReact) {
         // Safe React compile wrapper
         const safeCode = trimmedCode
-            .replace(/import\s+.*?\s+from\s+['"].*?['"];?/g, '')
+            .replace(/import\s+[\s\S]*?\s+from\s+['"].*?['"];?/g, '')
             .replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
             .replace(/export\s+default\s+(\w+);?/, '');
 
@@ -137,7 +111,7 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
                     <div id="zylron-root">
                         ${trimmedCode.includes('<') && !trimmedCode.includes('function') ? trimmedCode : ''}
                     </div>
-                    <script>
+                    <script type="module">
                         try {
                             ${trimmedCode.includes('<') && !trimmedCode.includes('function') ? '' : trimmedCode}
                         } catch(e) {
