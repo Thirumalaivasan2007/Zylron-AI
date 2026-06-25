@@ -673,7 +673,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                 } else if (jsBlocks) {
                     const rawContent = jsBlocks[0].replace(/```(?:javascript|js|jsx|react)\s*\n/i, "").replace(/\n```/i, "");
                     const safeContent = rawContent.replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '').replace(/export\s+default\s+function\s+(\w+)/, 'function $1').replace(/export\s+default\s+(\w+);?/, '');
-                    const fullHtml = \`<!DOCTYPE html>
+                    const fullHtml = `<!DOCTYPE html>
 <html style="height: 100%; margin: 0; padding: 0; background: #000;">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -687,10 +687,10 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
     <div id="root" style="min-height: 100%; width: 100%;"></div>
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
-        \${safeContent}
+        ${safeContent}
         let AppComp = typeof App !== 'undefined' ? App : (typeof Main !== 'undefined' ? Main : null);
         if (!AppComp) {
-            const matches = \\\`\${safeContent.replace(/[\`$\\]/g, '\\\\$&')}\\\`.match(/function\\s+([A-Z]\\w+)/g);
+            const matches = \`${safeContent.replace(/[`$\\]/g, '\\$&')}\`.match(/function\\s+([A-Z]\\w+)/g);
             if (matches && matches.length > 0) AppComp = eval(matches[matches.length - 1].replace('function ', '').trim());
         }
         if (AppComp) {
@@ -699,7 +699,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         }
     </script>
 </body>
-</html>\`;
+</html>`;
                     await toolHandlers.writeFile({ filename: 'index.html', content: fullHtml });
                     previewUrl = `${BASE_URL}/workspace/index.html?t=${Date.now()}`;
                     agentUsed = true;
