@@ -12,10 +12,16 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
     if (!isOpen) return null;
 
     // Smart Sandbox Logic: Improved detection and full-screen dark boilerplate
-    const trimmedCode = code.trim();
+    const rawTrimmed = code.trim();
+    // Globally strip imports/exports to prevent Babel standalone crashes from AI hallucinations
+    const trimmedCode = rawTrimmed
+        .replace(/import\s+[\s\S]*?\s+from\s+['"].*?['"];?/g, '')
+        .replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
+        .replace(/export\s+default\s+(\w+);?/, '');
+
     const isFullHtml = trimmedCode.toLowerCase().startsWith('<!doctype') || trimmedCode.toLowerCase().startsWith('<html');
     const isIframe = trimmedCode.toLowerCase().startsWith('<iframe');
-    const isReact = trimmedCode.includes('import React') || trimmedCode.includes('export default') || trimmedCode.includes('ReactDOM') || trimmedCode.includes('className=') || trimmedCode.includes('useState(');
+    const isReact = trimmedCode.includes('ReactDOM') || trimmedCode.includes('className=') || trimmedCode.includes('useState(') || rawTrimmed.includes('import React');
 
     let srcDoc = '';
 
@@ -38,11 +44,8 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
             srcDoc = errorScript + trimmedCode;
         }
     } else if (isReact) {
-        // Safe React compile wrapper
-        const safeCode = trimmedCode
-            .replace(/import\s+[\s\S]*?\s+from\s+['"].*?['"];?/g, '')
-            .replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
-            .replace(/export\s+default\s+(\w+);?/, '');
+        // Safe React compile wrapper (imports already stripped globally above)
+        const safeCode = trimmedCode;
 
         srcDoc = `
             <!DOCTYPE html>
