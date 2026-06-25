@@ -674,7 +674,11 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
                     agentUsed = true;
                 } else if (jsBlocks) {
                     const rawContent = jsBlocks[0].replace(/```(?:javascript|js|jsx|react)\s*\n/i, "").replace(/\n```/i, "");
-                    const safeContent = rawContent.replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '').replace(/export\s+default\s+function\s+(\w+)/, 'function $1').replace(/export\s+default\s+(\w+);?/, '');
+                    const safeContent = rawContent
+                        .replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '')
+                        .replace(/export\s+default\s+/g, '')
+                        .replace(/export\s+(const|let|var|function|class)\s+/g, '$1 ')
+                        .replace(/export\s+\{[^}]+\};?/g, '');
                     const fullHtml = `<!DOCTYPE html>
 <html style="height: 100%; margin: 0; padding: 0; background: #000;">
 <head>

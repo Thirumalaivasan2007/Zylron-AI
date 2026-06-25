@@ -16,8 +16,9 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
     // Globally strip imports/exports to prevent Babel standalone crashes from AI hallucinations
     const trimmedCode = rawTrimmed
         .replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '')
-        .replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
-        .replace(/export\s+default\s+(\w+);?/, '');
+        .replace(/export\s+default\s+/g, '')
+        .replace(/export\s+(const|let|var|function|class)\s+/g, '$1 ')
+        .replace(/export\s+\{[^}]+\};?/g, '');
 
     const isFullHtml = trimmedCode.toLowerCase().startsWith('<!doctype') || trimmedCode.toLowerCase().startsWith('<html');
     const isIframe = trimmedCode.toLowerCase().startsWith('<iframe');

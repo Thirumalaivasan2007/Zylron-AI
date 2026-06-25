@@ -133,8 +133,9 @@ const toolHandlers = {
             if (filename.endsWith('.html') || filename.endsWith('.js') || filename.endsWith('.jsx')) {
                 safeContent = content
                     .replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '')
-                    .replace(/export\s+default\s+function\s+(\w+)/g, 'function $1')
-                    .replace(/export\s+default\s+(\w+);?/g, '');
+                    .replace(/export\s+default\s+/g, '')
+                    .replace(/export\s+(const|let|var|function|class)\s+/g, '$1 ')
+                    .replace(/export\s+\{[^}]+\};?/g, '');
             }
 
             fs.writeFileSync(path.join(workspaceDir, filename), safeContent);
