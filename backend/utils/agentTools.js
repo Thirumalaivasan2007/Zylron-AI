@@ -127,7 +127,17 @@ const toolHandlers = {
         try {
             const workspaceDir = path.join(__dirname, '..', '..', 'agent_workspace');
             if (!fs.existsSync(workspaceDir)) fs.mkdirSync(workspaceDir, { recursive: true });
-            fs.writeFileSync(path.join(workspaceDir, filename), content);
+            
+            // 🛡️ GLOBAL SANITIZER: Strip import/export to prevent Babel crashes in Live Preview
+            let safeContent = content;
+            if (filename.endsWith('.html') || filename.endsWith('.js') || filename.endsWith('.jsx')) {
+                safeContent = content
+                    .replace(/import\s+(?:[\s\S]*?from\s+)?['"][^'"]+['"];?/g, '')
+                    .replace(/export\s+default\s+function\s+(\w+)/g, 'function $1')
+                    .replace(/export\s+default\s+(\w+);?/g, '');
+            }
+
+            fs.writeFileSync(path.join(workspaceDir, filename), safeContent);
             return `✅ Success: File '${filename}' created.`;
         } catch (error) { return `❌ Write failed: ${error.message}`; }
     },
