@@ -56,6 +56,7 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
                     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
                     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
                     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+                    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
                     <style>
                         html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }
                         #zylron-root { min-height: 100%; width: 100%; }
@@ -75,6 +76,20 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
 
                         ${safeCode}
 
+                        class ErrorBoundary extends React.Component {
+                            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+                            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+                            render() {
+                                if (this.state.hasError) {
+                                    return <div style={{color:'#ef4444', padding:'20px', background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', margin:'20px', borderRadius:'12px', fontFamily:'monospace'}}>
+                                        <h3>Zylron React Runtime Error</h3>
+                                        <p>{this.state.error.toString()}</p>
+                                    </div>;
+                                }
+                                return this.props.children;
+                            }
+                        }
+
                         // Mount Logic
                         let AppComp = null;
                         if (typeof App !== 'undefined') AppComp = App;
@@ -82,7 +97,7 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
                         else if (typeof Main !== 'undefined') AppComp = Main;
                         else if (typeof Dashboard !== 'undefined') AppComp = Dashboard;
                         else {
-                            const matches = \`${safeCode}\`.match(/function\\s+([A-Z]\\w+)/g);
+                            const matches = \`${safeCode.replace(/[`$\\]/g, '\\$&')}\`.match(/function\\s+([A-Z]\\w+)/g);
                             if (matches && matches.length > 0) {
                                 const name = matches[matches.length - 1].replace('function ', '').trim();
                                 AppComp = eval(name);
@@ -91,7 +106,7 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode }) => {
 
                         if (AppComp) {
                             const root = ReactDOM.createRoot(document.getElementById('zylron-root'));
-                            root.render(<AppComp />);
+                            root.render(<ErrorBoundary><AppComp /></ErrorBoundary>);
                         } else {
                             document.getElementById('zylron-root').innerHTML = '<div style="color:#ef4444;padding:20px;">Error: Could not find a React component to render.</div>';
                         }

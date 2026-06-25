@@ -582,7 +582,8 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         - The final output will be ONE self-contained HTML file (all CSS and JS embedded inline).
         - CRITICAL: NEVER mention separate style.css or script.js files.
         - CRITICAL: If writing React/JSX, NEVER use HTML comments (<!-- -->). Always use JSX comments ({/* */}).
-        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\` or \`const { Play } = lucide;\`.
+        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart, Line } = Recharts;\`.
+        - PRE-LOADED LIBRARIES: React, ReactDOM, lucide-react (as \`lucide\`), and Recharts (as \`Recharts\`) are already loaded via CDN. Do NOT import them.
         - ALWAYS tell the user to use the 'Neural Sandbox' or 'Live Preview' to view the app.
         - Keep your blueprint concise and focused on design + features.
         Use an ultra-premium design style.`;
@@ -609,7 +610,8 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         You MUST use the writeFile tool with filename='${customHtmlFile}'.
         CRITICAL FOR STYLING: Since the file is '${customHtmlFile}' (not index.html), you MUST embed ALL CSS inside a <style> tag and ALL JavaScript inside a <script> tag within the HTML file. Do NOT use separate style.css or script.js files. Make it ONE complete self-contained HTML file.
         CRITICAL: NEVER use HTML comments (<!-- -->) inside React/JSX. Always use JSX comments ({/* */}).
-        CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\` or \`const { Play } = lucide;\`.
+        CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart, Line } = Recharts;\`.
+        PRE-LOADED LIBRARIES: React, ReactDOM, lucide-react (as \`lucide\`), and Recharts (as \`Recharts\`) are already loaded via CDN. Do NOT import them.
         Use Tailwind CDN, premium dark theme, glassmorphism, and animations.
         NEVER display raw code links in the chat.
         BLUEPRINT: ${blueprint}`;
@@ -681,13 +683,33 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <style>html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }</style>
 </head>
 <body>
     <div id="root" style="min-height: 100%; width: 100%;"></div>
     <script type="text/babel">
+        window.onerror = function(msg, url, line) {
+            const div = document.createElement('div');
+            div.style.cssText = 'color: #ef4444; padding: 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); margin: 20px; border-radius: 12px; font-size: 12px; font-family: monospace; position: fixed; z-index: 9999;';
+            div.innerText = 'React Error: ' + msg + ' (Line ' + line + ')';
+            document.body.prepend(div);
+        };
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
         ${safeContent}
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            render() {
+                if (this.state.hasError) {
+                    return <div style={{color:'#ef4444', padding:'20px', background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', margin:'20px', borderRadius:'12px', fontFamily:'monospace'}}>
+                        <h3>Zylron React Runtime Error</h3>
+                        <p>{this.state.error.toString()}</p>
+                    </div>;
+                }
+                return this.props.children;
+            }
+        }
         let AppComp = typeof App !== 'undefined' ? App : (typeof Main !== 'undefined' ? Main : null);
         if (!AppComp) {
             const matches = \`${safeContent.replace(/[`$\\]/g, '\\$&')}\`.match(/function\\s+([A-Z]\\w+)/g);
@@ -695,7 +717,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         }
         if (AppComp) {
             const root = ReactDOM.createRoot(document.getElementById('root'));
-            root.render(<AppComp />);
+            root.render(<ErrorBoundary><AppComp /></ErrorBoundary>);
         }
     </script>
 </body>
