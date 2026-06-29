@@ -303,6 +303,7 @@ const Dashboard = () => {
     const [isDevPortalOpen, setIsDevPortalOpen] = useState(false);
     const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
     const [previewCode, setPreviewCode] = useState('');
+    const [currentPreviewUrl, setCurrentPreviewUrl] = useState(null);
     const [credits, setCredits] = useState(() => {
         const today = new Date().toDateString();
         const savedDate = localStorage.getItem('zylron_credits_date');
@@ -2512,6 +2513,7 @@ const Dashboard = () => {
                                                                         animate={msg.animate} 
                                                                         onPreviewHtml={(code) => {
                                                                             setPreviewCode(code);
+                                                                            setCurrentPreviewUrl(msg.previewUrl);
                                                                             setIsCodeModalOpen(true);
                                                                         }} 
                                                                     />
@@ -2578,12 +2580,15 @@ const Dashboard = () => {
                                                                                     
                                                                                     if (mdMatch && mdMatch[1]) {
                                                                                         setPreviewCode(mdMatch[1]);
+                                                                                        setCurrentPreviewUrl(msg.previewUrl);
                                                                                         setIsCodeModalOpen(true);
                                                                                     } else if (htmlMatch && htmlMatch[1]) {
                                                                                         setPreviewCode(htmlMatch[1]);
+                                                                                        setCurrentPreviewUrl(msg.previewUrl);
                                                                                         setIsCodeModalOpen(true);
                                                                                     } else {
                                                                                         setPreviewCode(msg.content);
+                                                                                        setCurrentPreviewUrl(msg.previewUrl);
                                                                                         setIsCodeModalOpen(true);
                                                                                     }
                                                                                 }} 
@@ -2890,6 +2895,7 @@ const Dashboard = () => {
                 isOpen={isCodeModalOpen} 
                 onClose={() => setIsCodeModalOpen(false)} 
                 code={previewCode} 
+                previewUrl={currentPreviewUrl}
             />
             <CustomPersonaModal 
                 isOpen={isCustomPersonaModalOpen} 
