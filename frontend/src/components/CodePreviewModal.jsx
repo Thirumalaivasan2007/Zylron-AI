@@ -57,7 +57,6 @@ const CodePreviewModal = ({ isOpen, onClose, code: initialCode, previewUrl }) =>
                     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
                     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
                     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-                    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
                     <style>
                         html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }
                         #zylron-root { min-height: 100%; width: 100%; }

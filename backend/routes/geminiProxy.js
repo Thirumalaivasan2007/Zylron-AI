@@ -585,8 +585,7 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
           <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
           <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
           <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-          <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart } = Recharts;\`.
+        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, or \`const { Play } = lucide;\`.
         - ALWAYS tell the user to use the 'Neural Sandbox' or 'Live Preview' to view the app.
         - Keep your blueprint concise and focused on design + features.
         Use an ultra-premium design style.`;
@@ -682,7 +681,6 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <style>html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: auto; color: white; }</style>
 </head>
 <body>
