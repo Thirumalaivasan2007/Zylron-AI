@@ -578,12 +578,15 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
         const architectInstruction = `You are the Zylron Architect. 
         MISSION: Design the technical blueprint for a premium web app.
         ${pushStatus}
-        - Use Tailwind CDN, premium dark theme, glassmorphism effects, and smooth animations.
         - The final output will be ONE self-contained HTML file (all CSS and JS embedded inline).
-        - CRITICAL: NEVER mention separate style.css or script.js files.
-        - CRITICAL: If writing React/JSX, NEVER use HTML comments (<!-- -->). Always use JSX comments ({/* */}).
-        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart, Line } = Recharts;\`.
-        - PRE-LOADED LIBRARIES: React, ReactDOM, lucide-react (as \`lucide\`), and Recharts (as \`Recharts\`) are already loaded via CDN. Do NOT import them.
+        - CRITICAL: Use ONLY these exact CDNs in the <head>:
+          <script src="https://cdn.tailwindcss.com"></script>
+          <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+          <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+          <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+          <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+          <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+        - CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart } = Recharts;\`.
         - ALWAYS tell the user to use the 'Neural Sandbox' or 'Live Preview' to view the app.
         - Keep your blueprint concise and focused on design + features.
         Use an ultra-premium design style.`;
@@ -604,16 +607,8 @@ Chat naturally and helpfully. NO labels like 'NEURAL ARCHITECT'.`;
 
         const coderInstruction = `You are the Zylron Coder. Your MISSION is to EXECUTE TOOLS. 
         CRITICAL: If a GitHub repository is mentioned, you MUST call the 'pushToGitHub' tool IMMEDIATELY. 
-        DO NOT simulate the push; perform the actual tool call. 
-        If writing React/JSX, you MUST name the primary component 'App' for the sandbox to render it. 
-        IMPORTANT: The user wants the main HTML file saved as '${customHtmlFile}'. 
-        You MUST use the writeFile tool with filename='${customHtmlFile}'.
-        CRITICAL FOR STYLING: Since the file is '${customHtmlFile}' (not index.html), you MUST embed ALL CSS inside a <style> tag and ALL JavaScript inside a <script> tag within the HTML file. Do NOT use separate style.css or script.js files. Make it ONE complete self-contained HTML file.
-        CRITICAL: NEVER use HTML comments (<!-- -->) inside React/JSX. Always use JSX comments ({/* */}).
-        CRITICAL: NEVER use \`import\` or \`export\` statements! There is no bundler. Use global variables like \`const { useState } = React;\`, \`const { Play } = lucide;\`, or \`const { LineChart, Line } = Recharts;\`.
-        PRE-LOADED LIBRARIES: React, ReactDOM, lucide-react (as \`lucide\`), and Recharts (as \`Recharts\`) are already loaded via CDN. Do NOT import them.
-        Use Tailwind CDN, premium dark theme, glassmorphism, and animations.
-        NEVER display raw code links in the chat.
+        IMPORTANT: You MUST use the writeFile tool with filename='${customHtmlFile}'. 
+        CRITICAL RULE: The content for writeFile MUST BE EXACTLY the HTML provided in the BLUEPRINT below. DO NOT write your own code! DO NOT rewrite or summarize it! Extract the complete HTML from the blueprint and pass it exactly as is to the writeFile tool!
         BLUEPRINT: ${blueprint}`;
 
         const coderContents = [...history, { role: "user", parts: [{ text: `Implement this: ${blueprint}` }] }];
