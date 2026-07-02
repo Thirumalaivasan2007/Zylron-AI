@@ -131,9 +131,9 @@ export const createPublicShareWithId = async (publicId, messages, persona) => {
 export const fetchPublicChat = async (publicId) => {
     try {
         const shareRef = doc(db, 'public_shares', publicId);
-        const docSnap = await getDocs(query(collection(db, 'public_shares'), where("__name__", "==", publicId)));
-        if (!docSnap.empty) {
-            return docSnap.docs[0].data();
+        const docSnap = await getDoc(shareRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
         }
         return null;
     } catch (error) {
