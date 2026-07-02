@@ -1,4 +1,4 @@
-import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles, Bot, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Zap, Search, RefreshCw, Share2, FileDown, HelpCircle, Download, Pin, Users, ShieldCheck, Sparkles, Bot, CheckCircle2, Loader2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -6,6 +6,7 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFolder, setActiveFolder] = useState(() => localStorage.getItem('zylron_active_folder') || 'all');
     const [bgTasks, setBgTasks] = useState([]);
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     // 🤖 Fetch background agent tasks on mount + poll
     useEffect(() => {
@@ -255,29 +256,42 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                         style={{ width: isPro ? '100%' : `${(credits/50)*100}%` }}
                     ></div>
                 </div>
-
-                {/* Developer Portal & Help Center Triggers */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
+                {/* Advanced Options Accordion */}
+                <div className="w-full flex justify-center mt-1 mb-2">
                     <button 
-                        onClick={onDevPortal}
-                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="p-1.5 rounded-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition-all"
                     >
-                        <ShieldCheck size={12} /> Developer API
-                    </button>
-                    <button 
-                        onClick={onHelpCenter}
-                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
-                    >
-                        <HelpCircle size={12} /> Help Center
+                        {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
                 </div>
 
-                <button 
-                    onClick={onAdmin}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-widest"
-                >
-                    <RefreshCw size={12} className="animate-spin-slow" /> Admin Intelligence
-                </button>
+                {showAdvanced && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* Developer Portal & Help Center Triggers */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                            <button 
+                                onClick={onDevPortal}
+                                className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
+                            >
+                                <ShieldCheck size={12} /> Developer API
+                            </button>
+                            <button 
+                                onClick={onHelpCenter}
+                                className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-wider"
+                            >
+                                <HelpCircle size={12} /> Help Center
+                            </button>
+                        </div>
+
+                        <button 
+                            onClick={onAdmin}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-black/40 border border-gray-200 dark:border-cyan-800/50 rounded-xl text-[10px] font-bold text-gray-700 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all uppercase tracking-widest"
+                        >
+                            <RefreshCw size={12} className="animate-spin-slow" /> Admin Intelligence
+                        </button>
+                    </div>
+                )}
 
                 {/* 🤖 Agent Orchestration Widget */}
                 {bgTasks.length > 0 && (
