@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /share/
 
 Sitemap: https://www.zylronai.app/sitemap.xml
