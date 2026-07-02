@@ -2,23 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 
 export default function MobileBlocker({ children }) {
-    const [isMobile, setIsMobile] = useState(false);
+    const [isUnsupported, setIsUnsupported] = useState(false);
 
     useEffect(() => {
-        const checkMobile = () => {
+        const checkSupport = () => {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            // Check for typical mobile user agents
-            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
-                setIsMobile(true);
+            const isMobileDevice = /android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent);
+            const isNarrowScreen = window.innerWidth < 1024; // Require at least 1024px width for the OS layout
+            
+            if (isMobileDevice || isNarrowScreen) {
+                setIsUnsupported(true);
             } else {
-                setIsMobile(false);
+                setIsUnsupported(false);
             }
         };
 
-        checkMobile();
+        checkSupport();
+        window.addEventListener('resize', checkSupport);
+        
+        return () => window.removeEventListener('resize', checkSupport);
     }, []);
 
-    if (isMobile) {
+    if (isUnsupported) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center font-sans relative overflow-hidden">
                 {/* Background Glows */}
