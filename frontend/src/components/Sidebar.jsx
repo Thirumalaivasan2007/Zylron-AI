@@ -115,24 +115,6 @@ const Sidebar = ({ history, onSessionClick, handleNewChat, currentSessionId, del
                 </div>
             </div>
 
-            {/* Quick Actions (Share, Export, Tour) */}
-            <div className="px-4 mb-4">
-                <div className="grid grid-cols-2 gap-2">
-                    <button onClick={onShare} className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-white/5 rounded-xl text-[10px] font-bold text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-cyan-900/20 transition-all border border-gray-100 dark:border-gray-800">
-                        <Share2 size={12} /> Share
-                    </button>
-                    <button onClick={onExportPDF} className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-white/5 rounded-xl text-[10px] font-bold text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-cyan-900/20 transition-all border border-gray-100 dark:border-gray-800">
-                        <FileDown size={12} /> PDF
-                    </button>
-                    <button onClick={onExportMD} className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-white/5 rounded-xl text-[10px] font-bold text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-cyan-900/20 transition-all border border-gray-100 dark:border-gray-800">
-                        <Download size={12} /> MD
-                    </button>
-                    <button onClick={onTour} className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-white/5 rounded-xl text-[10px] font-bold text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-cyan-900/20 transition-all border border-gray-100 dark:border-gray-800">
-                        <HelpCircle size={12} /> Tour
-                    </button>
-                </div>
-            </div>            
-
             {/* Step 2 Real Logic: Team Assets & Players */}
             {activeWorkspace === 'team' && (
                 <div className="px-4 space-y-4 mb-4">
