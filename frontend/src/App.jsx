@@ -15,6 +15,7 @@ import Pricing from './pages/marketing/Pricing';
 import About from './pages/marketing/About';
 import TermsOfService from './pages/marketing/TermsOfService';
 import Security from './pages/marketing/Security';
+import MobileBlocker from './components/MobileBlocker';
 
 // Inner component so useRecall can access Router's context
 function AppRoutes() {
@@ -50,7 +51,9 @@ function AppRoutes() {
 function App() {
     return (
         <Router>
-            <AppRoutes />
+            <MobileBlocker>
+                <AppRoutes />
+            </MobileBlocker>
         </Router>
     );
 }
