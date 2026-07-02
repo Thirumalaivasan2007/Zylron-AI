@@ -28,7 +28,7 @@ body, html {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-dark);
   color: #f8fafc;
-  overflow: hidden !important;
+  overflow-x: hidden;
 }
 
 /* ============================================
