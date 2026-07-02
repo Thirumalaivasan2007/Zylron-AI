@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 
 export default function MobileBlocker({ children }) {
-    const [isUnsupported, setIsUnsupported] = useState(false);
+    const [blockReason, setBlockReason] = useState(null);
 
     useEffect(() => {
         const checkSupport = () => {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
             const isMobileDevice = /android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent);
-            const isNarrowScreen = window.innerWidth < 1024; // Require at least 1024px width for the OS layout
+            const isNarrowScreen = window.innerWidth < 1024;
             
-            if (isMobileDevice || isNarrowScreen) {
-                setIsUnsupported(true);
+            if (isMobileDevice) {
+                setBlockReason('device');
+            } else if (isNarrowScreen) {
+                setBlockReason('width');
             } else {
-                setIsUnsupported(false);
+                setBlockReason(null);
             }
         };
 
@@ -23,7 +25,7 @@ export default function MobileBlocker({ children }) {
         return () => window.removeEventListener('resize', checkSupport);
     }, []);
 
-    if (isUnsupported) {
+    if (blockReason) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center font-sans relative overflow-hidden">
                 {/* Background Glows */}
@@ -35,11 +37,23 @@ export default function MobileBlocker({ children }) {
                         <Monitor className="w-16 h-16 text-cyan-400" strokeWidth={1.5} />
                     </div>
                     
-                    <h1 className="text-3xl font-black text-white mb-4 tracking-tight">Desktop Only</h1>
+                    <h1 className="text-3xl font-black text-white mb-4 tracking-tight">
+                        {blockReason === 'device' ? 'Desktop Only' : 'Maximize Window'}
+                    </h1>
                     <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                        Zylron AI's Neural Architecture requires desktop-class processing and display. 
-                        <br/><br/>
-                        <span className="text-cyan-400 font-medium">Please open this link on your Desktop or Laptop computer for the full experience.</span>
+                        {blockReason === 'device' ? (
+                            <>
+                                Zylron AI's Neural Architecture requires desktop-class processing and display. 
+                                <br/><br/>
+                                <span className="text-cyan-400 font-medium">Please open this link on your Desktop or Laptop computer.</span>
+                            </>
+                        ) : (
+                            <>
+                                Zylron AI's Neural UI requires a wider screen to display properly.
+                                <br/><br/>
+                                <span className="text-cyan-400 font-medium">Please maximize your browser window or increase its width.</span>
+                            </>
+                        )}
                     </p>
                     
                     <div className="w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-20 rounded-full"></div>
