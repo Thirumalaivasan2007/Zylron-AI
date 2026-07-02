@@ -1,8 +1,10 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 
 export default function TermsOfService() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-300 py-24 px-4 font-sans">
+            <SEO title="Terms of Service" canonical="/terms-of-service" />
             <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 p-8 md:p-12 rounded-3xl">
                 <h1 className="text-4xl font-black text-white mb-4">Terms of Service</h1>
                 <p className="text-slate-500 mb-12">Last Updated: October 24, 2026</p>

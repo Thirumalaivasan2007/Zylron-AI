@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Brain, Lock, Code, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '../../components/SEO';
 
 export default function Features() {
     const features = [
@@ -32,6 +33,7 @@ export default function Features() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center pt-24 pb-16 px-4">
+            <SEO title="Features" description="Explore the Next-Gen Neural Features of Zylron AI. Built for speed, precision, and privacy." canonical="/features" />
             <div className="max-w-6xl w-full">
                 <div className="text-center mb-16">
                     <h1 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 text-transparent bg-clip-text">

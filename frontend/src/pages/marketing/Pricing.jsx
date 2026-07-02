@@ -1,10 +1,12 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Pricing() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4 font-sans">
+            <SEO title="Pricing" canonical="/pricing" />
             <div className="max-w-7xl mx-auto text-center mb-16">
                 <h1 className="text-5xl md:text-7xl font-black mb-6">Simple, Transparent Pricing</h1>
                 <p className="text-xl text-slate-400 max-w-2xl mx-auto">

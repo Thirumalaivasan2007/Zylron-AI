@@ -1,9 +1,11 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { ShieldCheck, Server, KeySquare } from 'lucide-react';
 
 export default function Security() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4 font-sans">
+            <SEO title="Security" canonical="/security" />
             <div className="max-w-6xl mx-auto text-center mb-20">
                 <ShieldCheck className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
                 <h1 className="text-5xl md:text-7xl font-black mb-6">Enterprise-Grade Security</h1>

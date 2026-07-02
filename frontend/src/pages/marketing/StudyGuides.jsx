@@ -1,10 +1,12 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { BookOpen, Target, Clock, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function StudyGuides() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4">
+            <SEO title="Smart Study Guides" canonical="/features/study-guides" />
             <div className="max-w-6xl mx-auto text-center mb-20">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium mb-8">
                     <BookOpen className="w-4 h-4" />

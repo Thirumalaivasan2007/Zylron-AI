@@ -1,10 +1,14 @@
 import React from 'react';
 import { Calculator, FunctionSquare, LineChart, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '../../components/SEO';
 
 export default function MathSolver() {
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4 overflow-hidden relative">
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center pt-24 pb-16 px-4 font-sans overflow-hidden relative">
+            <SEO title="Neural Math Engine" description="Solve complex calculus, algebra, and geometry problems instantly with Zylron's Neural Math Engine." canonical="/features/math-solver" />
+            
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 pointer-events-none"></div>
             {/* Background Glow */}
             <div className="absolute top-1/4 -left-1/4 w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-1/4 -right-1/4 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] pointer-events-none" />

@@ -1,9 +1,11 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { Code2, Terminal, Cpu, Database } from 'lucide-react';
 
 export default function Developers() {
     return (
         <div className="min-h-screen bg-[#020617] text-slate-300 py-24 px-4 font-sans">
+            <SEO title="For Developers" canonical="/developers" />
             <div className="max-w-6xl mx-auto">
                 <div className="text-center mb-20">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 font-mono text-sm border border-blue-500/20 mb-8">

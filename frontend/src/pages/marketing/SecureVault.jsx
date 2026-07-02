@@ -1,10 +1,12 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { Lock, Shield, Key, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SecureVault() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center py-24 px-4 overflow-hidden relative">
+            <SEO title="Zero-Knowledge Vault" canonical="/features/secure-vault" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950 to-slate-950"></div>
             
             <div className="max-w-4xl mx-auto relative z-10 text-center">

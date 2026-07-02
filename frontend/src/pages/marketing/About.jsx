@@ -1,9 +1,11 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { Network, Users, Code, Globe2 } from 'lucide-react';
 
 export default function About() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4 overflow-hidden relative">
+            <SEO title="About Zylron" canonical="/about" />
             <div className="max-w-4xl mx-auto text-center mb-24 relative z-10">
                 <div className="inline-block p-4 bg-white/5 rounded-2xl backdrop-blur-xl border border-white/10 mb-8">
                     <Network className="w-12 h-12 text-blue-400" />

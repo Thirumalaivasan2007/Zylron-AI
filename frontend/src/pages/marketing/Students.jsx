@@ -1,10 +1,12 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 import { GraduationCap, ArrowRight, BookOpen, Brain, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Students() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 py-24 px-4">
+            <SEO title="For Students" canonical="/students" />
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col lg:flex-row items-center gap-16">
                     <div className="flex-1 text-center lg:text-left">
