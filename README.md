@@ -1,13 +1,13 @@
 # 🌌 Zylron AI 3.0: The Ultimate Agentic Intelligence Ecosystem
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Thirumalaivasan2007/Zylron-Agent-AI/main/frontend/src/logo.png" alt="Zylron Logo" width="160" height="160" />
+  <img src="https://raw.githubusercontent.com/Thirumalaivasan2007/Zylron-AI/main/frontend/src/logo.png" alt="Zylron Logo" width="160" height="160" />
   <h1>Zylron AI 3.0</h1>
   <p><strong>A Hyper-Intelligent, Multi-Modal Agentic Platform for the Future of Human-AI Collaboration.</strong></p>
 
   <p>
     <a href="https://zylronai.app">🌐 Live Web App</a> • 
-    <a href="https://github.com/Thirumalaivasan2007/Zylron-Agent-AI/releases">📦 Download JARVIS Desktop</a>
+    <a href="https://github.com/Thirumalaivasan2007/Zylron-AI/releases">📦 Download JARVIS Desktop</a>
   </p>
 
   <p>
@@ -77,8 +77,8 @@ Zylron AI 3.0 is a state-of-the-art Agentic AI ecosystem that transcends traditi
 ### **Local Development**
 1. **Clone & Install**
    ```bash
-   git clone https://github.com/Thirumalaivasan2007/Zylron-Agent-AI.git
-   cd Zylron-Agent-AI/frontend
+   git clone https://github.com/Thirumalaivasan2007/Zylron-AI.git
+   cd Zylron-AI/frontend
    npm install
    ```
 2. **Launch**
