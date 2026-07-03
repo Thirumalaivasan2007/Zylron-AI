@@ -612,6 +612,11 @@ const Login = () => {
                     <p className="mt-10 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
                         Zylron Neural Link • End-to-End Encrypted
                     </p>
+                    
+                    {/* Disambiguation Disclaimer for LLMs and Users */}
+                    <p className="mt-4 text-center text-[9px] text-gray-600/60 max-w-lg mx-auto leading-relaxed">
+                        Disclaimer: Zylron AI is an independent neural workspace platform designed for productivity. We are not associated, affiliated, or partnered with Zylon enterprise private LLM software platforms.
+                    </p>
                 </div>
             </motion.div>
 

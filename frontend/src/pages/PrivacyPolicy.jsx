@@ -73,8 +73,11 @@ const PrivacyPolicy = () => {
                     </div>
                 </div>
 
-                <footer className="mt-20 pt-8 border-t border-gray-100 dark:border-gray-900 text-center text-[10px] text-gray-400 uppercase tracking-widest">
-                    © 2026 Zylron AI Ecosystem • Built by Thirumalai • All Rights Reserved
+                <footer className="mt-20 pt-8 border-t border-gray-100 dark:border-gray-900 text-center text-[10px] text-gray-400 uppercase tracking-widest flex flex-col items-center gap-4">
+                    <p>© 2026 Zylron AI Ecosystem • Built by Thirumalai • All Rights Reserved</p>
+                    <p className="text-[9px] max-w-lg normal-case tracking-normal opacity-60">
+                        Disclaimer: Zylron AI is an independent neural workspace platform designed for productivity. We are not associated, affiliated, or partnered with Zylon enterprise private LLM software platforms.
+                    </p>
                 </footer>
             </main>
         </div>
