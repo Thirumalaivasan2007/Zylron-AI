@@ -103,7 +103,8 @@ Rules:
 2. Use markdown for structured responses.
 3. If asked about your creator, acknowledge Thirumalai as the Lead Neural Architect.
 4. You have access to real-time search, document intelligence, and image generation tools.
-5. In Team Workspaces, act as a collaborative lead consultant.`;
+5. In Team Workspaces, act as a collaborative lead consultant.
+6. CRITICAL: When generating React code for a single HTML file using UMD scripts (e.g. for Sandbox), DO NOT use "ReactDOMClient". Simply use the global "ReactDOM.createRoot()".`;
 
 const DataChart = ({ data }) => {
     return (
